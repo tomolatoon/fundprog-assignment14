@@ -1,6 +1,6 @@
 # fundprog-assignment14
 
-基礎プログラミング課題14のプロジェクトです。
+基礎プログラミングおよび演習の第14回総合課題のプロジェクトです。
 
 ## 必要要件
 
@@ -14,8 +14,7 @@
 デバッグ情報付き、AddressSanitizer/UndefinedBehaviorSanitizer有効
 
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Debug
-cmake --build build
+cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug
 ```
 
 ### Releaseビルド
@@ -23,14 +22,26 @@ cmake --build build
 速度最適化、LTO有効
 
 ```bash
-cmake -B build -DCMAKE_BUILD_TYPE=Release
-cmake --build build
+cmake -B build/release -DCMAKE_BUILD_TYPE=Release && cmake --build build/release
+```
+
+### リビルドのみ（2回目以降）
+
+```bash
+cmake --build build/debug    # Debug
+cmake --build build/release  # Release
 ```
 
 ## 実行方法
 
+プロジェクトをルートとして次のフォルダに実行ファイルが生成されるのでそれを実行してください．
+
 ```bash
-./build/fundprog-assignment14
+# Debug
+/build/debug
+
+# Release
+/build/release
 ```
 
 ## プロジェクト構成
@@ -41,7 +52,9 @@ fundprog-assignment14/
 ├── src/
 │   └── main.c        # メインソース
 ├── include/          # ヘッダーファイル用
-├── build/            # ビルド成果物（gitignore済み）
+├── build/
+│   ├── debug/        # Debugビルド成果物
+│   └── release/      # Releaseビルド成果物
 └── README.md
 ```
 

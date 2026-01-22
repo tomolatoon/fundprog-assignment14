@@ -9,16 +9,22 @@
 
 ## ビルド方法
 
+### Debugビルド（デフォルト）
+
+デバッグ情報付き、AddressSanitizer/UndefinedBehaviorSanitizer有効
+
 ```bash
-# ビルドディレクトリを作成
-mkdir -p build
-cd build
+cmake -B build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build
+```
 
-# CMake設定を生成
-cmake ..
+### Releaseビルド
 
-# ビルド
-cmake --build .
+速度最適化、LTO有効
+
+```bash
+cmake -B build -DCMAKE_BUILD_TYPE=Release
+cmake --build build
 ```
 
 ## 実行方法
@@ -41,9 +47,21 @@ fundprog-assignment14/
 
 ## コンパイルオプション
 
-安全性重視のコンパイルオプションが有効になっています：
+### 共通オプション（安全性重視）
 
-- `-Wall -Wextra -Wpedantic` - 厳格な警告
-- `-Werror` - 警告をエラーとして扱う
+- `-Wall -Wextra -Wpedantic -Werror` - 厳格な警告
 - `-Wconversion -Wsign-conversion` - 暗黙の型変換を検出
 - その他多数の警告オプション
+
+### Debugビルド
+
+- `-g3 -O0` - 最大限のデバッグ情報、最適化なし
+- `-fno-omit-frame-pointer` - スタックトレース保持
+- `-fsanitize=address,undefined` - メモリ/未定義動作検出
+
+### Releaseビルド
+
+- `-O3` - 最大速度最適化
+- `-flto` - リンク時最適化
+- `-march=native` - CPU固有最適化
+- `-DNDEBUG` - assertマクロ無効化

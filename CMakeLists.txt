@@ -10,6 +10,12 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+# デフォルトビルドタイプをDebugに設定
+if(NOT CMAKE_BUILD_TYPE)
+    set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
+endif()
+message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
+
 # 実行ファイルを作成
 add_executable(${PROJECT_NAME}
     src/main.c
@@ -20,8 +26,9 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-# 安全性重視のコンパイルオプション
+# コンパイルオプション
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
+    # 共通の警告オプション（安全性重視）
     target_compile_options(${PROJECT_NAME} PRIVATE
         -Wall                # 基本的な警告を有効化
         -Wextra              # 追加の警告を有効化
@@ -37,9 +44,47 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         -Wstrict-prototypes  # 古いスタイルの関数宣言を警告
         -Wmissing-prototypes # プロトタイプなしの関数定義を警告
     )
+
+    # Debug用オプション
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:-g3>                    # 最大限のデバッグ情報
+        $<$<CONFIG:Debug>:-O0>                    # 最適化なし
+        $<$<CONFIG:Debug>:-fno-omit-frame-pointer> # スタックトレース保持
+        $<$<CONFIG:Debug>:-fsanitize=address,undefined> # Sanitizer有効
+    )
+    target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+    )
+
+    # Release用オプション
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release>:-O3>          # 最大速度最適化
+        $<$<CONFIG:Release>:-DNDEBUG>     # assertマクロ無効化
+        $<$<CONFIG:Release>:-flto>        # リンク時最適化
+        $<$<CONFIG:Release>:-march=native> # CPU固有最適化
+    )
+    target_link_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release>:-flto>
+    )
+
 elseif(MSVC)
+    # 共通の警告オプション
     target_compile_options(${PROJECT_NAME} PRIVATE
         /W4                  # 高い警告レベル
         /WX                  # 警告をエラーとして扱う
+    )
+
+    # Debug用オプション
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Debug>:/Zi>    # デバッグ情報
+        $<$<CONFIG:Debug>:/Od>    # 最適化なし
+        $<$<CONFIG:Debug>:/RTC1>  # ランタイムエラーチェック
+    )
+
+    # Release用オプション
+    target_compile_options(${PROJECT_NAME} PRIVATE
+        $<$<CONFIG:Release>:/O2>      # 速度最適化
+        $<$<CONFIG:Release>:/GL>      # リンク時コード生成
+        $<$<CONFIG:Release>:/DNDEBUG> # assertマクロ無効化
     )
 endif()

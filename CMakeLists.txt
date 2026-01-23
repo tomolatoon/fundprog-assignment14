@@ -16,15 +16,40 @@ if(NOT CMAKE_BUILD_TYPE)
 endif()
 message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 
+# Unity Framework
+add_compile_definitions(UNITY_INCLUDE_DOUBLE) # Double精度を有効化
+include(FetchContent)
+FetchContent_Declare(
+    Unity
+    GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
+    GIT_TAG        v2.6.0
+)
+FetchContent_MakeAvailable(Unity)
+
 # 実行ファイルを作成
 add_executable(${PROJECT_NAME}
     src/main.c
+    src/rgba.c
+)
+
+# テスト用実行ファイル
+add_executable(test_rgba
+    src/test/rgba.c
+    src/rgba.c
 )
 
 # インクルードディレクトリ
 target_include_directories(${PROJECT_NAME} PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
+target_include_directories(test_rgba PRIVATE
+    ${CMAKE_CURRENT_SOURCE_DIR}/include
+)
+
+# 数学ライブラリをリンク（test_rgba用）
+# Unityの設定：Double精度を有効化
+target_compile_definitions(test_rgba PRIVATE UNITY_INCLUDE_DOUBLE)
+target_link_libraries(test_rgba PRIVATE m unity)
 
 # コンパイルオプション
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
@@ -43,6 +68,9 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         -Wundef              # 未定義マクロの使用を警告
         -Wstrict-prototypes  # 古いスタイルの関数宣言を警告
         -Wmissing-prototypes # プロトタイプなしの関数定義を警告
+    )
+    target_compile_options(test_rgba PRIVATE
+        -Wall -Wextra -Wpedantic
     )
 
     # Debug用オプション
@@ -67,3 +95,4 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
         $<$<CONFIG:Release>:-flto>
     )
 endif()
+

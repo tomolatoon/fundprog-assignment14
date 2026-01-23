@@ -66,25 +66,4 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     target_link_options(${PROJECT_NAME} PRIVATE
         $<$<CONFIG:Release>:-flto>
     )
-
-elseif(MSVC)
-    # 共通の警告オプション
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        /W4                  # 高い警告レベル
-        /WX                  # 警告をエラーとして扱う
-    )
-
-    # Debug用オプション
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:/Zi>    # デバッグ情報
-        $<$<CONFIG:Debug>:/Od>    # 最適化なし
-        $<$<CONFIG:Debug>:/RTC1>  # ランタイムエラーチェック
-    )
-
-    # Release用オプション
-    target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Release>:/O2>      # 速度最適化
-        $<$<CONFIG:Release>:/GL>      # リンク時コード生成
-        $<$<CONFIG:Release>:/DNDEBUG> # assertマクロ無効化
-    )
 endif()

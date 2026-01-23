@@ -1,17 +1,17 @@
 # fundprog-assignment14
 
-基礎プログラミングおよび演習の第14回総合課題のプロジェクトです。
+基礎プログラミングおよび演習の第14回総合課題のプロジェクト
 
 ## 必要要件
 
 - CMake 3.10 以上
-- C99対応コンパイラ（GCC, Clang, MSVC など）
+- GCC, Clang（C99対応）
 
 ## ビルド方法
 
 ### Debugビルド（デフォルト）
 
-デバッグ情報付き、AddressSanitizer/UndefinedBehaviorSanitizer有効
+デバッグ情報付き，AddressSanitizer/UndefinedBehaviorSanitizer有効
 
 ```bash
 cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug
@@ -19,7 +19,7 @@ cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug
 
 ### Releaseビルド
 
-速度最適化、LTO有効
+速度最適化，LTO有効
 
 ```bash
 cmake -B build/release -DCMAKE_BUILD_TYPE=Release && cmake --build build/release

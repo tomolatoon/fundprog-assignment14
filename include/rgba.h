@@ -5,17 +5,19 @@
 /// @brief RGB/RGBA カラー構造体と操作
 
 /// @brief RGB カラー構造体 (0.0 ~ 1.0 の範囲)
-typedef struct RGB {
-    double r;  ///< 赤成分
-    double g;  ///< 緑成分
-    double b;  ///< 青成分
+typedef struct RGB
+{
+	double r; ///< 赤成分
+	double g; ///< 緑成分
+	double b; ///< 青成分
 } RGB;
 
 /// @brief RGBA カラー構造体 (0.0 ~ 1.0 の範囲)
 /// Alpha: 0.0 = 完全透明, 1.0 = 完全不透明
-typedef struct RGBA {
-    RGB rgb;   ///< RGB成分
-    double a;  ///< アルファ成分
+typedef struct RGBA
+{
+	RGB    rgb; ///< RGB成分
+	double a;   ///< アルファ成分
 } RGBA;
 
 // ============== RGB 関数 ==============
@@ -57,5 +59,31 @@ RGBA rgba_blend(RGBA dst, RGBA src);
 /// @param to 終了色
 /// @param t 補間係数 (0.0 ~ 1.0)
 RGBA rgba_lerp(RGBA from, RGBA to, double t);
+
+// ============== 配列変換関数 ==============
+
+/// @brief RGB カラーを配列に変換する
+/// @param rgb 変換元の RGB
+/// @param out_array 変換結果を格納する配列 (サイズ3以上)
+/// @pre out_array は NULL であってはならない
+void rgb_to_array(RGB rgb, double* out_array);
+
+/// @brief 配列から RGB カラーを作成する
+/// @param array RGB成分を含む配列 (サイズ3以上)
+/// @return 作成された RGB
+/// @pre array は NULL であってはならない
+RGB rgb_from_array(const double* array);
+
+/// @brief RGBA カラーを配列に変換する
+/// @param rgba 変換元の RGBA
+/// @param out_array 変換結果を格納する配列 (サイズ4以上)
+/// @pre out_array は NULL であってはならない
+void rgba_to_array(RGBA rgba, double* out_array);
+
+/// @brief 配列から RGBA カラーを作成する
+/// @param array RGBA成分を含む配列 (サイズ4以上)
+/// @return 作成された RGBA
+/// @pre array は NULL であってはならない
+RGBA rgba_from_array(const double* array);
 
 #endif // RGBA_H

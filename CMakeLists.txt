@@ -10,6 +10,9 @@ set(CMAKE_C_STANDARD 99)
 set(CMAKE_C_STANDARD_REQUIRED ON)
 set(CMAKE_C_EXTENSIONS OFF)
 
+# clangd 用に compile_commands.json を常に生成
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+
 # デフォルトビルドタイプをDebugに設定
 if(NOT CMAKE_BUILD_TYPE)
     set(CMAKE_BUILD_TYPE Debug CACHE STRING "Build type" FORCE)
@@ -22,7 +25,7 @@ include(FetchContent)
 FetchContent_Declare(
     Unity
     GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
-    GIT_TAG        v2.6.0
+    GIT_TAG v2.6.0
 )
 FetchContent_MakeAvailable(Unity)
 
@@ -55,18 +58,18 @@ target_link_libraries(test_rgba PRIVATE m unity)
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     # 共通の警告オプション（安全性重視）
     target_compile_options(${PROJECT_NAME} PRIVATE
-        -Wall                # 基本的な警告を有効化
-        -Wextra              # 追加の警告を有効化
-        -Wpedantic           # ISO C標準への厳格な準拠
-        -Werror              # 警告をエラーとして扱う
-        -Wshadow             # 変数のシャドウイングを警告
-        -Wconversion         # 暗黙の型変換を警告
-        -Wsign-conversion    # 符号変換を警告
-        -Wnull-dereference   # NULLポインタの参照を警告
-        -Wdouble-promotion   # floatからdoubleへの暗黙の昇格を警告
-        -Wformat=2           # printf/scanf形式文字列の厳格なチェック
-        -Wundef              # 未定義マクロの使用を警告
-        -Wstrict-prototypes  # 古いスタイルの関数宣言を警告
+        -Wall # 基本的な警告を有効化
+        -Wextra # 追加の警告を有効化
+        -Wpedantic # ISO C標準への厳格な準拠
+        -Werror # 警告をエラーとして扱う
+        -Wshadow # 変数のシャドウイングを警告
+        -Wconversion # 暗黙の型変換を警告
+        -Wsign-conversion # 符号変換を警告
+        -Wnull-dereference # NULLポインタの参照を警告
+        -Wdouble-promotion # floatからdoubleへの暗黙の昇格を警告
+        -Wformat=2 # printf/scanf形式文字列の厳格なチェック
+        -Wundef # 未定義マクロの使用を警告
+        -Wstrict-prototypes # 古いスタイルの関数宣言を警告
         -Wmissing-prototypes # プロトタイプなしの関数定義を警告
     )
     target_compile_options(test_rgba PRIVATE
@@ -75,8 +78,8 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 
     # Debug用オプション
     target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Debug>:-g3>                    # 最大限のデバッグ情報
-        $<$<CONFIG:Debug>:-O0>                    # 最適化なし
+        $<$<CONFIG:Debug>:-g3> # 最大限のデバッグ情報
+        $<$<CONFIG:Debug>:-O0> # 最適化なし
         $<$<CONFIG:Debug>:-fno-omit-frame-pointer> # スタックトレース保持
         $<$<CONFIG:Debug>:-fsanitize=address,undefined> # Sanitizer有効
     )
@@ -86,9 +89,9 @@ if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
 
     # Release用オプション
     target_compile_options(${PROJECT_NAME} PRIVATE
-        $<$<CONFIG:Release>:-O3>          # 最大速度最適化
-        $<$<CONFIG:Release>:-DNDEBUG>     # assertマクロ無効化
-        $<$<CONFIG:Release>:-flto>        # リンク時最適化
+        $<$<CONFIG:Release>:-O3> # 最大速度最適化
+        $<$<CONFIG:Release>:-DNDEBUG> # assertマクロ無効化
+        $<$<CONFIG:Release>:-flto> # リンク時最適化
         $<$<CONFIG:Release>:-march=native> # CPU固有最適化
     )
     target_link_options(${PROJECT_NAME} PRIVATE

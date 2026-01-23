@@ -5,9 +5,12 @@
 ## 必要要件
 
 - CMake 3.10 以上
-- GCC, Clang（C99対応）
+- GCC または Clang（C99対応）
+- GDB（デバッグ用）
 
 ## ビルド方法
+
+まずリポジトリのルートディレクトリに移動し，その後次節の指示に従ってください．
 
 ### Debugビルド（デフォルト）
 
@@ -33,28 +36,52 @@ cmake --build build/release  # Release
 ```
 
 ## 実行方法
-
-プロジェクトをルートとして次のフォルダに実行ファイルが生成されるのでそれを実行してください．
+`./build/debug/` 以下と，`./build/release/` 以下に実行ファイルが生成されるので，それを直接実行します
 
 ```bash
 # Debug
-/build/debug
+./build/debug/fundprog-assignment14
 
 # Release
-/build/release
+./build/release/fundprog-assignment14
 ```
+
+## VS Code でのデバッグ
+
+本プロジェクトには VS Code 用のデバッグ設定が含まれています。
+
+### 必要な拡張機能
+
+- C/C++ (Microsoft)
+
+### 使い方
+
+1. F5 を押してデバッグ構成を選択
+2. 利用可能な構成：
+   - **Debug: Main** - メインプログラムをデバッグビルド＆実行
+   - **Release: Main** - メインプログラムをリリースビルド＆実行
+   - **Debug: Test** - テストをデバッグビルド＆実行
+   - **Release: Test** - テストをリリースビルド＆実行
 
 ## プロジェクト構成
 
 ```
 fundprog-assignment14/
-├── CMakeLists.txt    # CMake設定
+├── CMakeLists.txt        # CMake設定
+├── .clangd               # clangd設定（Intellisense用）
+├── .vscode/
+│   ├── tasks.json        # ビルドタスク
+│   └── launch.json       # デバッグ構成
+├── include/
+│   └── rgba.h            # RGB/RGBA構造体・関数宣言
 ├── src/
-│   └── main.c        # メインソース
-├── include/          # ヘッダーファイル用
+│   ├── main.c            # メインソース
+│   ├── rgba.c            # RGB/RGBA実装
+│   └── test/
+│       └── rgba.c        # Unityテスト
 ├── build/
-│   ├── debug/        # Debugビルド成果物
-│   └── release/      # Releaseビルド成果物
+│   ├── debug/            # Debugビルド成果物
+│   └── release/          # Releaseビルド成果物
 └── README.md
 ```
 
@@ -78,3 +105,7 @@ fundprog-assignment14/
 - `-flto` - リンク時最適化
 - `-march=native` - CPU固有最適化
 - `-DNDEBUG` - assertマクロ無効化
+
+## テストフレームワーク
+
+[Unity](https://github.com/ThrowTheSwitch/Unity)（v2.6.0）を使用しています。CMake の FetchContent により自動的にダウンロードされます。

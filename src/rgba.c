@@ -70,6 +70,11 @@ RGBA rgba_lerp(RGBA from, RGBA to, double t)
 
 // ============== 配列変換関数 ==============
 
+RGB rgba_apply_alpha(RGBA rgba)
+{
+	return rgb_mul(rgba.rgb, rgba.a);
+}
+
 void rgb_to_array(RGB rgb, double* out_array)
 {
 	assert(out_array != NULL);

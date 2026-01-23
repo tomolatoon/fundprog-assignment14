@@ -60,6 +60,11 @@ RGBA rgba_blend(RGBA dst, RGBA src);
 /// @param t 補間係数 (0.0 ~ 1.0)
 RGBA rgba_lerp(RGBA from, RGBA to, double t);
 
+/// @brief RGB成分にアルファ値を乗算した RGB カラーを返す
+/// @param rgba 変換元の RGBA
+/// @return アルファ乗算済みの RGB
+RGB rgba_apply_alpha(RGBA rgba);
+
 // ============== 配列変換関数 ==============
 
 /// @brief RGB カラーを配列に変換する

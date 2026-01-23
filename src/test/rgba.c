@@ -152,6 +152,30 @@ void test_rgba_lerp(void)
 
 // ============== 配列変換テスト ==============
 
+void test_rgba_apply_alpha(void)
+{
+	// case 1: 半透明 (alpha = 0.5)
+	RGBA half     = rgba_new(1.0, 0.5, 0.2, 0.5);
+	RGB  res_half = rgba_apply_alpha(half);
+	TEST_ASSERT_EQUAL_DOUBLE(0.5, res_half.r);
+	TEST_ASSERT_EQUAL_DOUBLE(0.25, res_half.g);
+	TEST_ASSERT_EQUAL_DOUBLE(0.1, res_half.b);
+
+	// case 2: 完全不透明 (alpha = 1.0)
+	RGBA opaque     = rgba_new(0.5, 0.5, 0.5, 1.0);
+	RGB  res_opaque = rgba_apply_alpha(opaque);
+	TEST_ASSERT_EQUAL_DOUBLE(0.5, res_opaque.r);
+	TEST_ASSERT_EQUAL_DOUBLE(0.5, res_opaque.g);
+	TEST_ASSERT_EQUAL_DOUBLE(0.5, res_opaque.b);
+
+	// case 3: 完全透明 (alpha = 0.0)
+	RGBA transparent = rgba_new(1.0, 1.0, 1.0, 0.0);
+	RGB  res_trans   = rgba_apply_alpha(transparent);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, res_trans.r);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, res_trans.g);
+	TEST_ASSERT_EQUAL_DOUBLE(0.0, res_trans.b);
+}
+
 void test_rgb_to_array(void)
 {
 	RGB    rgb = rgb_new(0.1, 0.2, 0.3);
@@ -212,6 +236,10 @@ int main(void)
 	RUN_TEST(test_rgba_from_rgb);
 	RUN_TEST(test_rgba_blend);
 	RUN_TEST(test_rgba_lerp);
+
+	// アルファ乗算テスト
+	RUN_TEST(test_rgba_apply_alpha);
+
 	RUN_TEST(test_rgba_to_array);
 	RUN_TEST(test_rgba_from_array);
 

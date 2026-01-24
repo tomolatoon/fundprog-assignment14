@@ -54,6 +54,12 @@ target_include_directories(test_rgba PRIVATE
 target_compile_definitions(test_rgba PRIVATE UNITY_INCLUDE_DOUBLE)
 target_link_libraries(test_rgba PRIVATE m unity)
 
+# CTest を有効化
+enable_testing()
+
+# テストを登録
+add_test(NAME test_rgba COMMAND test_rgba)
+
 # コンパイルオプション
 if(CMAKE_C_COMPILER_ID MATCHES "GNU|Clang")
     # 共通の警告オプション（安全性重視）

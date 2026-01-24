@@ -60,8 +60,20 @@ cmake --build build/release  # Release
 2. 利用可能な構成：
    - **Debug: Main** - メインプログラムをデバッグビルド＆実行
    - **Release: Main** - メインプログラムをリリースビルド＆実行
-   - **Debug: Test** - テストをデバッグビルド＆実行
-   - **Release: Test** - テストをリリースビルド＆実行
+
+## テスト実行
+
+CTest を使用して全テストを一括実行できます。
+
+```bash
+# Debug
+ctest --test-dir build/debug --output-on-failure
+
+# Release
+ctest --test-dir build/release --output-on-failure
+```
+
+VS Code では `Ctrl+Shift+P` → `Tasks: Run Task` → `CTest Run All (Debug)` でも実行できます。
 
 ## プロジェクト構成
 

@@ -95,8 +95,6 @@ ctest --test-dir build/debug --output-on-failure
 | `rgba_lib` | RGB/RGBA カラー操作 | [docs/libs/rgba.md](docs/libs/rgba.md) |
 | `layer_lib` | レイヤー（画像バッファ）操作 | [docs/libs/layer.md](docs/libs/layer.md) |
 
----
-
 ## コンポーネント開発者向け
 
 各開発者は `components/<your-id>/` ディレクトリで作業します。ファイルを追加するだけで自動的にビルド対象になります。

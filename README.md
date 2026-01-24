@@ -1,145 +1,130 @@
-# fundprog-video-composer
+# fundprog-assignment14
 
-動画コンポーネント作成フレームワーク
+基礎プログラミング演習の総合課題として、**複数人で動画（GIFアニメーション）を作成するためのフレームワーク**です。
 
-## 必要要件
+## 特徴
+
+- **複数人での共同開発**: 各開発者が独自の「コンポーネント」を実装し、最終的にそれらを統合して1つの動画を生成します
+- **コード衝突の回避**: 開発者ごとにディレクトリが分離し、Git でのマージコンフリクトを最小限に抑えています
+- **再利用可能な基礎ライブラリ**: 色操作（RGB/RGBA）やレイヤー描画などの共通機能を、全員が利用できるライブラリとして提供しています
+
+最終的な出力は PPM 連番画像として生成され、ffmpeg を使って GIF アニメーションに変換できます。
+
+---
+
+## クイックスタート
+
+### 必要なもの
 
 - CMake 3.14 以上
-- GCC または Clang（C99対応）
-- GDB（デバッグ用）
-- ffmpeg（GIF変換用、オプション）
+- GCC または Clang（C99 対応）
+- GDB（デバッグ用、オプション）
+- ffmpeg（GIF 変換用、オプション）
 
-## ビルド方法
-
-### Debugビルド（デフォルト）
+### ビルドと実行
 
 ```bash
-cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug
-```
+# リポジトリをクローン
+git clone https://github.com/tomolatoon/fundprog-assignment14.git
+cd fundprog-assignment14
 
-### Releaseビルド
+# ビルド（Debug）
+cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
 
-```bash
-cmake -B build/release -DCMAKE_BUILD_TYPE=Release && cmake --build build/release
-```
-
-## 実行方法
-
-```bash
-# Debug
+# 実行
 ./build/debug/app/video_composer
 
-# Release
-./build/release/app/video_composer
-```
-
-## テスト実行
-
-```bash
+# テスト実行
 ctest --test-dir build/debug --output-on-failure
 ```
 
+詳しい環境構築手順は [docs/getting-started.md](docs/getting-started.md) を参照してください。
+
+---
+
 ## プロジェクト構成
 
-```
-fundprog-video-composer/
-├── CMakeLists.txt                      # トップレベルCMake設定
-├── cmake/
-│   ├── CompilerWarnings.cmake          # コンパイラ警告設定
-│   └── ComponentMacros.cmake           # コンポーネント作成用マクロ
-│
-├── libs/                               # 基礎ライブラリ群
-│   ├── CMakeLists.txt                  # libs_all 統合ターゲット含む
-│   ├── rgba/                           # RGB/RGBA カラーライブラリ
-│   │   ├── include/rgba/rgba.h
-│   │   ├── src/rgba.c
-│   │   └── test/test_rgba.c
-│   └── layer/                          # Layer ライブラリ（HLayerハンドル型）
-│       ├── include/layer/layer.h
-│       ├── src/layer.c
-│       └── test/
-│
-├── components/                         # 動画コンポーネント群
-│   ├── h2511186/                       # 開発者 h2511186 用
-│   │   ├── include/h2511186/component.h
-│   │   ├── src/component.c
-│   │   └── test/
-│   └── k2511070/                       # 開発者 k2511070 用
-│       ├── include/k2511070/component.h
-│       ├── src/component.c
-│       └── test/
-│
-├── app/                                # 統合アプリケーション
-│   └── src/main.c
-│
-├── output/                             # GIF出力先
-│   └── frames/                         # PPM連番画像
-│
-└── build/                              # ビルド成果物
-    ├── debug/
-    └── release/
-```
-
-## アーキテクチャ
+このプロジェクトは **3層構造** になっています：
 
 ```
-┌─────────────────────────────────────────────────────────┐
-│                        app                              │
-│                   (video_composer)                      │
-└────────────────────────┬────────────────────────────────┘
-                         │ 依存
-    ┌────────────────────┼────────────────────┐
-    ▼                    ▼                    ▼
-┌──────────┐       ┌──────────┐       ┌──────────┐
-│ h2511186 │       │ k2511070 │       │   ...    │
-│   _lib   │       │   _lib   │       │  (拡張)  │
-└────┬─────┘       └────┬─────┘       └────┬─────┘
-     │                  │                  │
-     └──────────────────┼──────────────────┘
-                        ▼
-              ┌───────────────────┐
-              │     libs_all      │  (INTERFACE)
-              └────────┬──────────┘
-         ┌─────────────┼─────────────┐
-         ▼             ▼             ▼
-    ┌─────────┐   ┌──────────┐   ┌─────────┐
-    │rgba_lib │   │layer_lib │   │  ...    │
-    └─────────┘   └──────────┘   └─────────┘
+┌─────────────────────────────────────────┐
+│           app (video_composer)          │  ← 最終的な動画を生成
+└─────────────────────┬───────────────────┘
+                      │ 利用
+      ┌───────────────┴───────────────┐
+      ▼                               ▼
+┌───────────┐                   ┌───────────┐
+│ h2511186  │                   │ k2511070  │  ← 各開発者のコンポーネント
+│   _lib    │                   │   _lib    │
+└─────┬─────┘                   └─────┬─────┘
+      │                               │
+      └───────────────┬───────────────┘
+                      ▼
+              ┌─────────────┐
+              │  libs_all   │  ← 基盤ライブラリをまとめて提供
+              └──────┬──────┘
+           ┌─────────┼─────────┐
+           ▼         ▼         ▼
+      ┌────────┐ ┌─────────┐ ┌────────┐
+      │rgba_lib│ │layer_lib│ │  ...   │  ← 基盤ライブラリ
+      └────────┘ └─────────┘ └────────┘
 ```
 
-## コンポーネント追加方法
+### ディレクトリ構造
 
-このプロジェクトではコンポーネントの制作者毎にディレクトリを分けて管理します。
+| ディレクトリ | 説明 |
+|-------------|------|
+| `libs/` | 基盤ライブラリ |
+| `components/` | 開発者ごとのコンポーネント |
+| `app/` | 統合アプリケーション（動画を生成） |
+| `cmake/` | CMake ヘルパーモジュール |
+| `docs/` | ドキュメント |
+| `output/` | 出力先（PPM 画像、GIF など） |
 
-### コンポーネントディレクトリ構造
+詳しいアーキテクチャは [docs/architecture.md](docs/architecture.md) を参照してください。
 
-```
-components/
-└── <id>/
-    ├── include/
-    ├── src/
-    └── test/
-```
+---
 
-### コンポーネント制作者ディレクトリ作成手順
+## 基盤ライブラリ
 
-1. `components/<id>/` ディレクトリを作成
-2. `include/<id>/`, `src/`, `test/` サブディレクトリを作成
-3. CMakeLists.txt に `add_video_component(<id>)` を記述
+コンポーネント開発で使用できる基盤ライブラリです。
 
-### コンポーネント作成手順
+| ライブラリ | 説明 | ドキュメント |
+|-----------|------|-------------|
+| `rgba_lib` | RGB/RGBA カラー操作 | [docs/libs/rgba.md](docs/libs/rgba.md) |
+| `layer_lib` | レイヤー（画像バッファ）操作 | [docs/libs/layer.md](docs/libs/layer.md) |
 
-1. ソース/ヘッダファイルを追加（GLOB で自動検出されます）
+---
 
-## CMake構成の特徴
+## コンポーネント開発者向け
 
-Modern CMake で採用される規則に基づいて構成されています。
+各開発者は `components/<your-id>/` ディレクトリで作業します。ファイルを追加するだけで自動的にビルド対象になります。
 
-- **ターゲットベース設計**: `target_*` コマンドのみ使用
-- **名前空間付きエイリアス**: `fundprog-video-composer::rgba_lib` 形式
-- **libs_all 統合ターゲット**: コンポーネントはこれだけに依存すればOK
-- **CONFIGURE_DEPENDS**: ファイル追加時に自動再構成
+### 始め方
+
+1. 自分のディレクトリを作成（すでに存在する場合はスキップ）
+2. `src/` にソースファイルを追加
+3. `include/<your-id>/` にヘッダファイルを追加
+4. ビルドすると自動的に検出されます
+
+詳しい手順は [docs/components/how-to-add.md](docs/components/how-to-add.md) を参照してください。
+
+---
+
+## ドキュメント一覧
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [docs/getting-started.md](docs/getting-started.md) | 環境構築から初回ビルドまで |
+| [docs/architecture.md](docs/architecture.md) | プロジェクト全体のアーキテクチャ |
+| [docs/libs/rgba.md](docs/libs/rgba.md) | rgba_lib の設計と使い方 |
+| [docs/libs/layer.md](docs/libs/layer.md) | layer_lib の設計と使い方 |
+| [docs/components/how-to-add.md](docs/components/how-to-add.md) | コンポーネント追加方法 |
+| [docs/cmake/conventions.md](docs/cmake/conventions.md) | CMake 設計規約 |
+
+---
 
 ## テストフレームワーク
 
-[Unity](https://github.com/ThrowTheSwitch/Unity)（v2.6.0）を使用。CMake の FetchContent により自動ダウンロード。
+[Unity](https://github.com/ThrowTheSwitch/Unity)（v2.6.0）を使用しています。CMake の FetchContent により自動的にダウンロードされるため、事前のインストールは不要です。

@@ -1,20 +1,17 @@
-# fundprog-assignment14
+# fundprog-video-composer
 
-基礎プログラミングおよび演習の第14回総合課題のプロジェクト
+動画コンポーネント作成フレームワーク
 
 ## 必要要件
 
 - CMake 3.14 以上
 - GCC または Clang（C99対応）
 - GDB（デバッグ用）
+- ffmpeg（GIF変換用、オプション）
 
 ## ビルド方法
 
-まずリポジトリのルートディレクトリに移動し，その後次節の指示に従ってください．
-
 ### Debugビルド（デフォルト）
-
-デバッグ情報付き，AddressSanitizer/UndefinedBehaviorSanitizer有効
 
 ```bash
 cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug
@@ -22,118 +19,127 @@ cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug
 
 ### Releaseビルド
 
-速度最適化，LTO有効
-
 ```bash
 cmake -B build/release -DCMAKE_BUILD_TYPE=Release && cmake --build build/release
 ```
 
-### リビルドのみ（2回目以降）
-
-```bash
-cmake --build build/debug    # Debug
-cmake --build build/release  # Release
-```
-
 ## 実行方法
-
-`./build/debug/src/` 以下と，`./build/release/src/` 以下に実行ファイルが生成されるので，それを直接実行します
 
 ```bash
 # Debug
-./build/debug/src/fundprog-assignment14
+./build/debug/app/video_composer
 
 # Release
-./build/release/src/fundprog-assignment14
+./build/release/app/video_composer
 ```
-
-## VS Code でのデバッグ
-
-本プロジェクトには VS Code 用のデバッグ設定が含まれています。
-
-### 必要な拡張機能
-
-- C/C++ (Microsoft)
-
-### 使い方
-
-1. F5 を押してデバッグ構成を選択
-2. 利用可能な構成：
-   - **Debug: Main** - メインプログラムをデバッグビルド＆実行
-   - **Release: Main** - メインプログラムをリリースビルド＆実行
-   - **Debug: Test RGBA** - テストをデバッグビルド＆実行
-   - **Release: Test RGBA** - テストをリリースビルド＆実行
 
 ## テスト実行
 
-CTest を使用して全テストを一括実行できます。
-
 ```bash
-# Debug
 ctest --test-dir build/debug --output-on-failure
-
-# Release
-ctest --test-dir build/release --output-on-failure
 ```
-
-VS Code では `Ctrl+Shift+P` → `Tasks: Run Task` → `CTest Run All (Debug)` でも実行できます。
 
 ## プロジェクト構成
 
 ```
-fundprog-assignment14/
-├── CMakeLists.txt              # メインCMake設定
+fundprog-video-composer/
+├── CMakeLists.txt                      # トップレベルCMake設定
 ├── cmake/
-│   └── CompilerWarnings.cmake  # コンパイラ警告設定モジュール
-├── .clangd                     # clangd設定（Intellisense用）
-├── .vscode/
-│   ├── tasks.json              # ビルドタスク
-│   └── launch.json             # デバッグ構成
-├── include/
-│   └── rgba.h                  # RGB/RGBA構造体・関数宣言
-├── src/
-│   ├── CMakeLists.txt          # ソース用CMake設定
-│   ├── main.c                  # メインソース
-│   └── rgba.c                  # RGB/RGBA実装
-├── test/
-│   ├── CMakeLists.txt          # テスト用CMake設定
-│   └── test_rgba.c             # Unityテスト
-├── build/
-│   ├── debug/                  # Debugビルド成果物
-│   └── release/                # Releaseビルド成果物
-└── README.md
+│   ├── CompilerWarnings.cmake          # コンパイラ警告設定
+│   └── ComponentMacros.cmake           # コンポーネント作成用マクロ
+│
+├── libs/                               # 基礎ライブラリ群
+│   ├── CMakeLists.txt                  # libs_all 統合ターゲット含む
+│   ├── rgba/                           # RGB/RGBA カラーライブラリ
+│   │   ├── include/rgba/rgba.h
+│   │   ├── src/rgba.c
+│   │   └── test/test_rgba.c
+│   └── layer/                          # Layer ライブラリ（HLayerハンドル型）
+│       ├── include/layer/layer.h
+│       ├── src/layer.c
+│       └── test/
+│
+├── components/                         # 動画コンポーネント群
+│   ├── h2511186/                       # 開発者 h2511186 用
+│   │   ├── include/h2511186/component.h
+│   │   ├── src/component.c
+│   │   └── test/
+│   └── k2511070/                       # 開発者 k2511070 用
+│       ├── include/k2511070/component.h
+│       ├── src/component.c
+│       └── test/
+│
+├── app/                                # 統合アプリケーション
+│   └── src/main.c
+│
+├── output/                             # GIF出力先
+│   └── frames/                         # PPM連番画像
+│
+└── build/                              # ビルド成果物
+    ├── debug/
+    └── release/
 ```
 
-## CMake構成
+## アーキテクチャ
 
-モダンCMakeのベストプラクティスに基づき、以下のような構成になっています：
+```
+┌─────────────────────────────────────────────────────────┐
+│                        app                              │
+│                   (video_composer)                      │
+└────────────────────────┬────────────────────────────────┘
+                         │ 依存
+    ┌────────────────────┼────────────────────┐
+    ▼                    ▼                    ▼
+┌──────────┐       ┌──────────┐       ┌──────────┐
+│ h2511186 │       │ k2511070 │       │   ...    │
+│   _lib   │       │   _lib   │       │  (拡張)  │
+└────┬─────┘       └────┬─────┘       └────┬─────┘
+     │                  │                  │
+     └──────────────────┼──────────────────┘
+                        ▼
+              ┌───────────────────┐
+              │     libs_all      │  (INTERFACE)
+              └────────┬──────────┘
+         ┌─────────────┼─────────────┐
+         ▼             ▼             ▼
+    ┌─────────┐   ┌──────────┐   ┌─────────┐
+    │rgba_lib │   │layer_lib │   │  ...    │
+    └─────────┘   └──────────┘   └─────────┘
+```
 
-- **ターゲットベース設計**: グローバル変数ではなくターゲットに対して設定を適用
-- **ライブラリ分離**: `rgba_lib` として再利用可能な STATIC ライブラリを定義
-- **モジュール化**: コンパイラ警告設定を `cmake/CompilerWarnings.cmake` に分離
-- **サブディレクトリ構成**: `src/` と `test/` にそれぞれ CMakeLists.txt を配置
+## コンポーネント追加方法
 
-## コンパイルオプション
+このプロジェクトではコンポーネントの制作者毎にディレクトリを分けて管理します。
 
-### 共通オプション（安全性重視）
+### コンポーネントディレクトリ構造
 
-- `-Wall -Wextra -Wpedantic -Werror` - 厳格な警告
-- `-Wconversion -Wsign-conversion` - 暗黙の型変換を検出
-- その他多数の警告オプション
+```
+components/
+└── <id>/
+    ├── include/
+    ├── src/
+    └── test/
+```
 
-### Debugビルド
+### コンポーネント制作者ディレクトリ作成手順
 
-- `-g3 -O0` - 最大限のデバッグ情報、最適化なし
-- `-fno-omit-frame-pointer` - スタックトレース保持
-- `-fsanitize=address,undefined` - メモリ/未定義動作検出
+1. `components/<id>/` ディレクトリを作成
+2. `include/<id>/`, `src/`, `test/` サブディレクトリを作成
+3. CMakeLists.txt に `add_video_component(<id>)` を記述
 
-### Releaseビルド
+### コンポーネント作成手順
 
-- `-O3` - 最大速度最適化
-- `-flto` - リンク時最適化
-- `-march=native` - CPU固有最適化
-- `-DNDEBUG` - assertマクロ無効化
+1. ソース/ヘッダファイルを追加（GLOB で自動検出されます）
+
+## CMake構成の特徴
+
+Modern CMake で採用される規則に基づいて構成されています。
+
+- **ターゲットベース設計**: `target_*` コマンドのみ使用
+- **名前空間付きエイリアス**: `fundprog-video-composer::rgba_lib` 形式
+- **libs_all 統合ターゲット**: コンポーネントはこれだけに依存すればOK
+- **CONFIGURE_DEPENDS**: ファイル追加時に自動再構成
 
 ## テストフレームワーク
 
-[Unity](https://github.com/ThrowTheSwitch/Unity)（v2.6.0）を使用しています。CMake の FetchContent により自動的にダウンロードされます。
+[Unity](https://github.com/ThrowTheSwitch/Unity)（v2.6.0）を使用。CMake の FetchContent により自動ダウンロード。

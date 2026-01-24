@@ -2,10 +2,10 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Debug: Main",
+            "name": "Debug: Video Composer",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/debug/src/fundprog-assignment14",
+            "program": "${workspaceFolder}/build/debug/app/video_composer",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -19,14 +19,14 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "CMake Build Main (Debug)",
+            "preLaunchTask": "CMake Build Video Composer (Debug)",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
-            "name": "Release: Main",
+            "name": "Release: Video Composer",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/release/src/fundprog-assignment14",
+            "program": "${workspaceFolder}/build/release/app/video_composer",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -40,14 +40,14 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "CMake Build Main (Release)",
+            "preLaunchTask": "CMake Build Video Composer (Release)",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
             "name": "Debug: Test RGBA",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/debug/test/test_rgba",
+            "program": "${workspaceFolder}/build/debug/libs/rgba/test_rgba",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -61,14 +61,14 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "CMake Build Test (Debug)",
+            "preLaunchTask": "CMake Build Test RGBA (Debug)",
             "miDebuggerPath": "/usr/bin/gdb"
         },
         {
             "name": "Release: Test RGBA",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${workspaceFolder}/build/release/test/test_rgba",
+            "program": "${workspaceFolder}/build/release/libs/rgba/test_rgba",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${workspaceFolder}",
@@ -82,7 +82,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "preLaunchTask": "CMake Build Test (Release)",
+            "preLaunchTask": "CMake Build Test RGBA (Release)",
             "miDebuggerPath": "/usr/bin/gdb"
         }
     ]

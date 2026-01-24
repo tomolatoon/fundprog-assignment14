@@ -1,4 +1,4 @@
-#include "rgba.h"
+#include "rgba/rgba.h"
 
 #include <assert.h>
 #include <stddef.h>

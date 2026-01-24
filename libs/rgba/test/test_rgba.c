@@ -1,5 +1,4 @@
-#include "rgba.h"
-
+#include "rgba/rgba.h"
 #include "unity.h"
 
 // Unityに必要

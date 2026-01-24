@@ -1,139 +1,130 @@
 # fundprog-assignment14
 
-基礎プログラミングおよび演習の第14回総合課題のプロジェクト
+基礎プログラミング演習の総合課題として、**複数人で動画（GIFアニメーション）を作成するためのフレームワーク**です。
 
-## 必要要件
+## 特徴
+
+- **複数人での共同開発**: 各開発者が独自の「コンポーネント」を実装し、最終的にそれらを統合して1つの動画を生成します
+- **コード衝突の回避**: 開発者ごとにディレクトリが分離し、Git でのマージコンフリクトを最小限に抑えています
+- **再利用可能な基礎ライブラリ**: 色操作（RGB/RGBA）やレイヤー描画などの共通機能を、全員が利用できるライブラリとして提供しています
+
+最終的な出力は PPM 連番画像として生成され、ffmpeg を使って GIF アニメーションに変換できます。
+
+---
+
+## クイックスタート
+
+### 必要なもの
 
 - CMake 3.14 以上
-- GCC または Clang（C99対応）
-- GDB（デバッグ用）
+- GCC または Clang（C99 対応）
+- GDB（デバッグ用、オプション）
+- ffmpeg（GIF 変換用、オプション）
 
-## ビルド方法
-
-まずリポジトリのルートディレクトリに移動し，その後次節の指示に従ってください．
-
-### Debugビルド（デフォルト）
-
-デバッグ情報付き，AddressSanitizer/UndefinedBehaviorSanitizer有効
+### ビルドと実行
 
 ```bash
-cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug && cmake --build build/debug
-```
+# リポジトリをクローン
+git clone https://github.com/tomolatoon/fundprog-assignment14.git
+cd fundprog-assignment14
 
-### Releaseビルド
+# ビルド（Debug）
+cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
 
-速度最適化，LTO有効
+# 実行
+./build/debug/app/video_composer
 
-```bash
-cmake -B build/release -DCMAKE_BUILD_TYPE=Release && cmake --build build/release
-```
-
-### リビルドのみ（2回目以降）
-
-```bash
-cmake --build build/debug    # Debug
-cmake --build build/release  # Release
-```
-
-## 実行方法
-
-`./build/debug/src/` 以下と，`./build/release/src/` 以下に実行ファイルが生成されるので，それを直接実行します
-
-```bash
-# Debug
-./build/debug/src/fundprog-assignment14
-
-# Release
-./build/release/src/fundprog-assignment14
-```
-
-## VS Code でのデバッグ
-
-本プロジェクトには VS Code 用のデバッグ設定が含まれています。
-
-### 必要な拡張機能
-
-- C/C++ (Microsoft)
-
-### 使い方
-
-1. F5 を押してデバッグ構成を選択
-2. 利用可能な構成：
-   - **Debug: Main** - メインプログラムをデバッグビルド＆実行
-   - **Release: Main** - メインプログラムをリリースビルド＆実行
-   - **Debug: Test RGBA** - テストをデバッグビルド＆実行
-   - **Release: Test RGBA** - テストをリリースビルド＆実行
-
-## テスト実行
-
-CTest を使用して全テストを一括実行できます。
-
-```bash
-# Debug
+# テスト実行
 ctest --test-dir build/debug --output-on-failure
-
-# Release
-ctest --test-dir build/release --output-on-failure
 ```
 
-VS Code では `Ctrl+Shift+P` → `Tasks: Run Task` → `CTest Run All (Debug)` でも実行できます。
+詳しい環境構築手順は [docs/getting-started.md](docs/getting-started.md) を参照してください。
+
+---
 
 ## プロジェクト構成
 
+このプロジェクトは **3層構造** になっています：
+
 ```
-fundprog-assignment14/
-├── CMakeLists.txt              # メインCMake設定
-├── cmake/
-│   └── CompilerWarnings.cmake  # コンパイラ警告設定モジュール
-├── .clangd                     # clangd設定（Intellisense用）
-├── .vscode/
-│   ├── tasks.json              # ビルドタスク
-│   └── launch.json             # デバッグ構成
-├── include/
-│   └── rgba.h                  # RGB/RGBA構造体・関数宣言
-├── src/
-│   ├── CMakeLists.txt          # ソース用CMake設定
-│   ├── main.c                  # メインソース
-│   └── rgba.c                  # RGB/RGBA実装
-├── test/
-│   ├── CMakeLists.txt          # テスト用CMake設定
-│   └── test_rgba.c             # Unityテスト
-├── build/
-│   ├── debug/                  # Debugビルド成果物
-│   └── release/                # Releaseビルド成果物
-└── README.md
+┌─────────────────────────────────────────┐
+│           app (video_composer)          │  ← 最終的な動画を生成
+└─────────────────────┬───────────────────┘
+                      │ 利用
+      ┌───────────────┴───────────────┐
+      ▼                               ▼
+┌───────────┐                   ┌───────────┐
+│ h2511186  │                   │ k2511070  │  ← 各開発者のコンポーネント
+│   _lib    │                   │   _lib    │
+└─────┬─────┘                   └─────┬─────┘
+      │                               │
+      └───────────────┬───────────────┘
+                      ▼
+              ┌─────────────┐
+              │  libs_all   │  ← 基盤ライブラリをまとめて提供
+              └──────┬──────┘
+           ┌─────────┼─────────┐
+           ▼         ▼         ▼
+      ┌────────┐ ┌─────────┐ ┌────────┐
+      │rgba_lib│ │layer_lib│ │  ...   │  ← 基盤ライブラリ
+      └────────┘ └─────────┘ └────────┘
 ```
 
-## CMake構成
+### ディレクトリ構造
 
-モダンCMakeのベストプラクティスに基づき、以下のような構成になっています：
+| ディレクトリ | 説明 |
+|-------------|------|
+| `libs/` | 基盤ライブラリ |
+| `components/` | 開発者ごとのコンポーネント |
+| `app/` | 統合アプリケーション（動画を生成） |
+| `cmake/` | CMake ヘルパーモジュール |
+| `docs/` | ドキュメント |
+| `output/` | 出力先（PPM 画像、GIF など） |
 
-- **ターゲットベース設計**: グローバル変数ではなくターゲットに対して設定を適用
-- **ライブラリ分離**: `rgba_lib` として再利用可能な STATIC ライブラリを定義
-- **モジュール化**: コンパイラ警告設定を `cmake/CompilerWarnings.cmake` に分離
-- **サブディレクトリ構成**: `src/` と `test/` にそれぞれ CMakeLists.txt を配置
+詳しいアーキテクチャは [docs/architecture.md](docs/architecture.md) を参照してください。
 
-## コンパイルオプション
+---
 
-### 共通オプション（安全性重視）
+## 基盤ライブラリ
 
-- `-Wall -Wextra -Wpedantic -Werror` - 厳格な警告
-- `-Wconversion -Wsign-conversion` - 暗黙の型変換を検出
-- その他多数の警告オプション
+コンポーネント開発で使用できる基盤ライブラリです。
 
-### Debugビルド
+| ライブラリ | 説明 | ドキュメント |
+|-----------|------|-------------|
+| `rgba_lib` | RGB/RGBA カラー操作 | [docs/libs/rgba.md](docs/libs/rgba.md) |
+| `layer_lib` | レイヤー（画像バッファ）操作 | [docs/libs/layer.md](docs/libs/layer.md) |
 
-- `-g3 -O0` - 最大限のデバッグ情報、最適化なし
-- `-fno-omit-frame-pointer` - スタックトレース保持
-- `-fsanitize=address,undefined` - メモリ/未定義動作検出
+---
 
-### Releaseビルド
+## コンポーネント開発者向け
 
-- `-O3` - 最大速度最適化
-- `-flto` - リンク時最適化
-- `-march=native` - CPU固有最適化
-- `-DNDEBUG` - assertマクロ無効化
+各開発者は `components/<your-id>/` ディレクトリで作業します。ファイルを追加するだけで自動的にビルド対象になります。
+
+### 始め方
+
+1. 自分のディレクトリを作成（すでに存在する場合はスキップ）
+2. `src/` にソースファイルを追加
+3. `include/<your-id>/` にヘッダファイルを追加
+4. ビルドすると自動的に検出されます
+
+詳しい手順は [docs/components/how-to-add.md](docs/components/how-to-add.md) を参照してください。
+
+---
+
+## ドキュメント一覧
+
+| ドキュメント | 内容 |
+|-------------|------|
+| [docs/getting-started.md](docs/getting-started.md) | 環境構築から初回ビルドまで |
+| [docs/architecture.md](docs/architecture.md) | プロジェクト全体のアーキテクチャ |
+| [docs/libs/rgba.md](docs/libs/rgba.md) | rgba_lib の設計と使い方 |
+| [docs/libs/layer.md](docs/libs/layer.md) | layer_lib の設計と使い方 |
+| [docs/components/how-to-add.md](docs/components/how-to-add.md) | コンポーネント追加方法 |
+| [docs/cmake/conventions.md](docs/cmake/conventions.md) | CMake 設計規約 |
+
+---
 
 ## テストフレームワーク
 
-[Unity](https://github.com/ThrowTheSwitch/Unity)（v2.6.0）を使用しています。CMake の FetchContent により自動的にダウンロードされます。
+[Unity](https://github.com/ThrowTheSwitch/Unity)（v2.6.0）を使用しています。CMake の FetchContent により自動的にダウンロードされるため、事前のインストールは不要です。

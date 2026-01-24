@@ -3,10 +3,10 @@
 # ==============================================================================
 cmake_minimum_required(VERSION 3.14)
 
-project(fundprog-assignment14
+project(fundprog-video-composer
     VERSION 1.0.0
     LANGUAGES C
-    DESCRIPTION "RGB/RGBA色空間操作ライブラリ"
+    DESCRIPTION "動画コンポーネント作成フレームワーク"
 )
 
 # ==============================================================================
@@ -32,6 +32,7 @@ message(STATUS "Build type: ${CMAKE_BUILD_TYPE}")
 # ==============================================================================
 list(APPEND CMAKE_MODULE_PATH "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 include(CompilerWarnings)
+include(ComponentMacros)
 
 # ==============================================================================
 # 外部依存関係
@@ -43,7 +44,7 @@ include(FetchContent)
 FetchContent_Declare(
     Unity
     GIT_REPOSITORY https://github.com/ThrowTheSwitch/Unity.git
-    GIT_TAG        v2.6.0
+    GIT_TAG v2.6.0
 )
 
 # Double精度を有効化（FetchContent_MakeAvailable前に設定）
@@ -60,5 +61,6 @@ enable_testing()
 # ==============================================================================
 # サブディレクトリ
 # ==============================================================================
-add_subdirectory(src)
-add_subdirectory(test)
+add_subdirectory(libs)
+add_subdirectory(components)
+add_subdirectory(app)

@@ -32,14 +32,14 @@
             "problemMatcher": []
         },
         {
-            "label": "CMake Build Main (Debug)",
+            "label": "CMake Build Video Composer (Debug)",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
                 "build/debug",
                 "--target",
-                "fundprog-assignment14",
+                "video_composer",
                 "--parallel"
             ],
             "options": {
@@ -53,14 +53,14 @@
             "dependsOn": "CMake Configure (Debug)"
         },
         {
-            "label": "CMake Build Main (Release)",
+            "label": "CMake Build Video Composer (Release)",
             "type": "shell",
             "command": "cmake",
             "args": [
                 "--build",
                 "build/release",
                 "--target",
-                "fundprog-assignment14",
+                "video_composer",
                 "--parallel"
             ],
             "options": {
@@ -71,7 +71,7 @@
             "dependsOn": "CMake Configure (Release)"
         },
         {
-            "label": "CMake Build Test (Debug)",
+            "label": "CMake Build Test RGBA (Debug)",
             "type": "shell",
             "command": "cmake",
             "args": [
@@ -89,7 +89,7 @@
             "dependsOn": "CMake Configure (Debug)"
         },
         {
-            "label": "CMake Build Test (Release)",
+            "label": "CMake Build Test RGBA (Release)",
             "type": "shell",
             "command": "cmake",
             "args": [
@@ -105,6 +105,22 @@
             "group": "build",
             "problemMatcher": "$gcc",
             "dependsOn": "CMake Configure (Release)"
+        },
+        {
+            "label": "CMake Build All (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build/debug",
+                "--parallel"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": "$gcc",
+            "dependsOn": "CMake Configure (Debug)"
         },
         {
             "label": "CTest Run All (Debug)",
@@ -123,7 +139,7 @@
                 "isDefault": true
             },
             "problemMatcher": [],
-            "dependsOn": "CMake Configure (Debug)"
+            "dependsOn": "CMake Build All (Debug)"
         },
         {
             "label": "CTest Run All (Release)",

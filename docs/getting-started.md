@@ -1,0 +1,141 @@
+# 環境構築ガイド
+
+このドキュメントでは、開発環境のセットアップから初回ビルド・テスト実行までの手順を説明します。
+
+## 必要要件
+
+| ツール | バージョン | 用途 |
+|--------|-----------|------|
+| CMake | 3.14 以上 | ビルドシステム |
+| GCC または Clang | C99 対応 | コンパイラ |
+| GDB | 任意 | デバッグ（オプション） |
+| ffmpeg | 任意 | GIF 変換（オプション） |
+
+### バージョン確認
+
+```bash
+cmake --version   # 3.14 以上であること
+gcc --version     # または clang --version
+```
+
+---
+
+## リポジトリの取得
+
+```bash
+git clone <repository-url>
+cd fundprog-video-composer
+```
+
+---
+
+## ビルド
+
+### Debug ビルド（推奨）
+
+デバッグ情報付き、AddressSanitizer/UndefinedBehaviorSanitizer 有効：
+
+```bash
+cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
+```
+
+### Release ビルド
+
+速度最適化、LTO 有効：
+
+```bash
+cmake -B build/release -DCMAKE_BUILD_TYPE=Release
+cmake --build build/release
+```
+
+### ビルド成果物
+
+ビルドが成功すると、以下のファイルが生成されます：
+
+| ファイル | 説明 |
+|---------|------|
+| `build/debug/app/video_composer` | 統合アプリケーション |
+| `build/debug/libs/rgba/test_rgba` | RGBA ライブラリのテスト |
+| `build/debug/libs/*/lib*.a` | 各ライブラリの静的ライブラリ |
+
+---
+
+## 動作確認
+
+### テスト実行
+
+```bash
+ctest --test-dir build/debug --output-on-failure
+```
+
+成功すると以下のような出力が表示されます:
+
+```
+Test project /path/to/build/debug
+    Start 1: test_rgba
+1/1 Test #1: test_rgba ........................   Passed    0.00 sec
+
+100% tests passed, 0 tests failed out of 1
+```
+
+### アプリケーション実行
+
+```bash
+./build/debug/app/video_composer
+```
+
+出力例：
+
+```
+Video Composer - 動画コンポーネント統合アプリケーション
+Done.
+```
+
+---
+
+## VS Code でのデバッグ
+
+本プロジェクトには VS Code 用の設定ファイルが含まれています。
+
+### 必要な拡張機能
+
+- **C/C++** (Microsoft)
+
+### 使い方
+
+1. **F5** を押してデバッグ構成を選択
+2. 利用可能な構成：
+   - **Debug: Video Composer** - メインアプリケーションをデバッグ
+   - **Debug: Test RGBA** - RGBA テストをデバッグ
+
+### ビルドタスク
+
+`Ctrl+Shift+B` でビルドタスクを実行できます。
+
+---
+
+## トラブルシューティング
+
+### CMake が見つからない
+
+```bash
+sudo apt install cmake  # Ubuntu/Debian
+brew install cmake      # macOS
+```
+
+### ビルドエラー: コンパイラが見つからない
+
+```bash
+sudo apt install build-essential  # Ubuntu/Debian
+xcode-select --install            # macOS
+```
+
+### clangd の警告が消えない
+
+ビルド後、`compile_commands.json` が生成されます。VS Code を再起動すると警告が解消されます。
+
+```bash
+# compile_commands.json の場所を確認
+ls build/debug/compile_commands.json
+```

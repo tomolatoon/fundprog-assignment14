@@ -1,12 +1,28 @@
 # layer_lib - レイヤー操作ライブラリ
 
-画像バッファ（レイヤー）を操作するためのライブラリです。`HLayer` というハンドル型を通じて操作します。
+画像バッファ（レイヤー）を操作するためのライブラリです。`HLayer` ハンドル型と `Point`/`Size` ベクトル構造体を使用します。
 
 ## ヘッダファイル
 
-詳細な API は以下のヘッダファイルを参照してください: 
-
 📄 [`libs/layer/include/layer/layer.h`](../../libs/layer/include/layer/layer.h)
+
+---
+
+## 型定義
+
+```c
+typedef struct { int x, y; } Point;       // 2D座標
+typedef struct { size_t w, h; } Size;     // サイズ
+typedef Layer* HLayer;                     // レイヤーハンドル
+typedef RGBA (*BlendFunc)(RGBA dst, RGBA src);  // 合成関数
+```
+
+### ヘルパーマクロ
+
+```c
+POINT(x, y)  // Point を生成
+SIZE(w, h)   // Size を生成
+```
 
 ---
 
@@ -14,10 +30,7 @@
 
 ### ハンドル型パターン
 
-`HLayer` は `Layer*` の typedef です。構造体の内部を隠蔽し、関数を通じてのみ操作させることで次の利点があります。
-
-- **カプセル化を実現**: 内部実装を変更しても利用者のコードに影響しない
-- **取り回しがよい**: ただのポインタなので値渡ししても問題なく扱いやすい
+`HLayer` は `Layer*` の typedef です。構造体の内部を隠蔽し、関数を通じてのみ操作します。
 
 ### 座標系
 
@@ -25,18 +38,18 @@
 - X軸は右方向、Y軸は下方向
 - ピクセル座標は **0-indexed**
 
-### 実装状況
+### アンチエイリアス
 
-| 機能 | 状態 |
-|------|------|
-| create / destroy | ✅ 実装済み |
-| get_width / get_height | ✅ 実装済み |
-| get_pixel / set_pixel | ✅ 実装済み |
-| fill | ✅ 実装済み |
-| draw_rect / draw_circle | 🚧 スタブ |
-| composite | 🚧 スタブ |
-| save_ppm | 🚧 スタブ |
-| rotate | 🚧 スタブ |
+- 基本描画関数（`layer_draw_*`）はアンチエイリアスなし
+- AA版（`layer_draw_*_aa`）は Xiaolin Wu アルゴリズム等を使用
+- スーパーサンプリング用に `layer_downsample_2x` も提供
+
+### 変形関数の命名規則
+
+| 関数名 | 動作 |
+|--------|------|
+| `layer_clip` | 破壊的（元レイヤーを変更） |
+| `layer_clip_to` | 新レイヤーを作成（元は変更しない） |
 
 ---
 
@@ -46,15 +59,23 @@
 #include "layer/layer.h"
 
 // 640x480 のレイヤーを作成
-HLayer layer = layer_create(640, 480);
+HLayer layer = layer_create(SIZE(640, 480));
 
 // 白で塗りつぶす
 layer_fill(layer, rgba_new(1.0, 1.0, 1.0, 1.0));
 
-// 特定のピクセルを赤に設定
-layer_set_pixel(layer, 100, 100, rgba_new(1.0, 0.0, 0.0, 1.0));
+// 赤い矩形を描画
+layer_draw_rect(layer, POINT(50, 50), SIZE(100, 80),
+                rgba_new(1.0, 0.0, 0.0, 1.0));
 
-// 使用後は破棄（今回は動き続けるプログラムでも無いのでしなくても大した問題にならないかもしれないが）
+// AA円を描画
+layer_draw_circle_aa(layer, POINT(200, 200), 60,
+                     rgba_new(0.0, 0.8, 0.0, 1.0));
+
+// PPM で保存
+layer_save_p6(layer, "output.ppm");
+
+// 使用後は必ず破棄
 layer_destroy(layer);
 ```
 
@@ -63,3 +84,4 @@ layer_destroy(layer);
 ## 関連
 
 - [rgba_lib](rgba.md) - 色操作（layer_lib が依存）
+- [layer.h](../../libs/layer/include/layer/layer.h) - 完全なAPI宣言

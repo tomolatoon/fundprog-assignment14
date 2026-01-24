@@ -27,10 +27,11 @@ target_include_directories(layer_lib
     $<INSTALL_INTERFACE:include>
 )
 
-# rgba_lib に依存
+# rgba_lib と libm に依存
 target_link_libraries(layer_lib
     PUBLIC
     ${PROJECT_NAME}::rgba_lib
+    m
 )
 
 # 厳格な警告オプションを適用

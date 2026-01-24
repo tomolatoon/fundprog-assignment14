@@ -41,7 +41,7 @@ int main(void)
 	layer_draw_circle_aa(layer, POINT(200, 350), 40, rgba_new(1.0, 0.0, 1.0, 0.7));
 
 	// AA 線
-	layer_draw_line_aa(layer, POINT(50, 450), POINT(600, 100), rgba_new(0.0, 0.5, 0.5, 1.0));
+	layer_draw_line_aa(layer, POINT(50, 450), POINT(600, 100), 2, rgba_new(0.0, 0.5, 0.5, 1.0));
 
 	// PPM 出力
 	if (layer_save_p6(layer, "output/demo.ppm"))

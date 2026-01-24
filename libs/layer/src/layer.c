@@ -501,52 +501,78 @@ void layer_draw_rect(HLayer layer, Point pos, Size size, RGBA color)
 
 void layer_draw_line(HLayer layer, Point p1, Point p2, size_t thickness, RGBA color)
 {
-	// Bresenham's line algorithm
-	int dx  = abs(p2.x - p1.x);
-	int dy  = abs(p2.y - p1.y);
-	int sx  = (p1.x < p2.x) ? 1 : -1;
-	int sy  = (p1.y < p2.y) ? 1 : -1;
-	int err = dx - dy;
-
-	int x = p1.x;
-	int y = p1.y;
-
-	while (1)
+	if (thickness == 0)
 	{
-		// thickness > 1 の場合は周囲にも描画
-		if (thickness <= 1)
+		return;
+	}
+
+	// 太さ1の場合は Bresenham アルゴリズムで描画（ポリゴン化によるドット抜け防止）
+	if (thickness == 1)
+	{
+		int x0 = p1.x;
+		int y0 = p1.y;
+		int x1 = p2.x;
+		int y1 = p2.y;
+
+		int dx  = abs(x1 - x0);
+		int dy  = abs(y1 - y0);
+		int sx  = (x0 < x1) ? 1 : -1;
+		int sy  = (y0 < y1) ? 1 : -1;
+		int err = dx - dy;
+
+		while (1)
 		{
-			layer_set_pixel(layer, POINT(x, y), color);
-		}
-		else
-		{
-			int half = (int)thickness / 2;
-			for (int ty = -half; ty <= half; ++ty)
+			layer_set_pixel(layer, POINT(x0, y0), color);
+
+			if (x0 == x1 && y0 == y1) break;
+
+			int e2 = 2 * err;
+			if (e2 > -dy)
 			{
-				for (int tx = -half; tx <= half; ++tx)
-				{
-					layer_set_pixel(layer, POINT(x + tx, y + ty), color);
-				}
+				err -= dy;
+				x0  += sx;
+			}
+			if (e2 < dx)
+			{
+				err += dx;
+				y0  += sy;
 			}
 		}
-
-		if (x == p2.x && y == p2.y)
-		{
-			break;
-		}
-
-		int e2 = 2 * err;
-		if (e2 > -dy)
-		{
-			err -= dy;
-			x   += sx;
-		}
-		if (e2 < dx)
-		{
-			err += dx;
-			y   += sy;
-		}
+		return;
 	}
+
+	// 方向ベクトル
+	double dx  = (double)(p2.x - p1.x);
+	double dy  = (double)(p2.y - p1.y);
+	double len = sqrt(dx * dx + dy * dy);
+
+	// 長さ0の場合は点を描画
+	if (len < 0.001)
+	{
+		int half = (int)thickness / 2;
+		for (int ty = -half; ty <= half; ++ty)
+		{
+			for (int tx = -half; tx <= half; ++tx)
+			{
+				layer_set_pixel(layer, POINT(p1.x + tx, p1.y + ty), color);
+			}
+		}
+		return;
+	}
+
+	// 法線ベクトル（線に垂直、長さ = thickness/2）
+	double nx = -dy / len * ((double)thickness / 2.0);
+	double ny = dx / len * ((double)thickness / 2.0);
+
+	// 4頂点を計算
+	Point v0 = POINT((int)round((double)p1.x + nx), (int)round((double)p1.y + ny));
+	Point v1 = POINT((int)round((double)p1.x - nx), (int)round((double)p1.y - ny));
+	Point v2 = POINT((int)round((double)p2.x - nx), (int)round((double)p2.y - ny));
+	Point v3 = POINT((int)round((double)p2.x + nx), (int)round((double)p2.y + ny));
+
+	// 凸多角形として描画 (v0 -> v3 -> v2 -> v1 の順)
+	Point points[4] = {v0, v3, v2, v1};
+	layer_draw_polygon(layer, points, 4, color);
 }
 
 void layer_draw_circle(HLayer layer, Point center, size_t radius, RGBA color)
@@ -626,114 +652,143 @@ void layer_draw_triangle(HLayer layer, Point p1, Point p2, Point p3, RGBA color)
 	fill_triangle_scanline(layer, p1, p2, p3, color);
 }
 
+// 凸多角形を一括で描画（アンチエイリアスなし）
 void layer_draw_polygon(HLayer layer, const Point* points, size_t n, RGBA color)
 {
-	if (n < 3)
+	if (n < 3) return;
+
+	// バウンディングボックス計算
+	int min_x = (int)layer->width - 1;
+	int max_x = 0;
+	int min_y = (int)layer->height - 1;
+	int max_y = 0;
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		if (points[i].x < min_x) min_x = points[i].x;
+		if (points[i].x > max_x) max_x = points[i].x;
+		if (points[i].y < min_y) min_y = points[i].y;
+		if (points[i].y > max_y) max_y = points[i].y;
+	}
+
+	// 画面外判定
+	if (min_x >= (int)layer->width || max_x < 0 || min_y >= (int)layer->height || max_y < 0) return;
+
+	min_x = clamp_int(min_x, 0, (int)layer->width - 1);
+	max_x = clamp_int(max_x, 0, (int)layer->width - 1);
+	min_y = clamp_int(min_y, 0, (int)layer->height - 1);
+	max_y = clamp_int(max_y, 0, (int)layer->height - 1);
+
+	// Edge Equation の係数を事前計算
+	int    count = (int)n;
+	double nx[count];
+	double ny[count];
+	double c[count];
+
+	// 回転方向を判定 (Y軸下向き: 正=CW, 負=CCW)
+	double signed_area = 0.0;
+	for (size_t i = 0; i < n; ++i)
+	{
+		Point p1     = points[i];
+		Point p2     = points[(i + 1) % n];
+		signed_area += (double)p1.x * (double)p2.y - (double)p2.x * (double)p1.y;
+	}
+
+	// CCWなら法線を反転させるための係数
+	double orientation = (signed_area < 0.0) ? -1.0 : 1.0;
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		Point  p1  = points[i];
+		Point  p2  = points[(i + 1) % n];
+		double dx  = (double)(p2.x - p1.x);
+		double dy  = (double)(p2.y - p1.y);
+		double len = sqrt(dx * dx + dy * dy);
+		if (len > 0.0)
+		{
+			// Edge Function: (px - x1)*dy - (py - y1)*dx
+			nx[i] = (-dy / len) * orientation;
+			ny[i] = (dx / len) * orientation;
+			c[i]  = -((double)p1.x * nx[i] + (double)p1.y * ny[i]);
+		}
+		else
+		{
+			nx[i] = ny[i] = c[i] = 0.0;
+		}
+	}
+
+	for (int y = min_y; y <= max_y; ++y)
+	{
+		for (int x = min_x; x <= max_x; ++x)
+		{
+			double px     = (double)x + 0.5;
+			double py     = (double)y + 0.5;
+			int    inside = 1;
+
+			for (size_t i = 0; i < n; ++i)
+			{
+				// ピクセル中心がエッジの内側(>=0)か判定
+				// 少し余裕を持たせるなら -0.001 とか
+				if (px * nx[i] + py * ny[i] + c[i] < 0.0)
+				{
+					inside = 0;
+					break;
+				}
+			}
+
+			if (inside)
+			{
+				// 非AAなので単純代入
+				layer_set_pixel(layer, POINT(x, y), color);
+			}
+		}
+	}
+}
+
+// ============================================================================
+// 幾何図形描画関数（アンチエイリアスあり）
+// ============================================================================
+
+// 前方宣言なし
+
+void layer_draw_line_aa(HLayer layer, Point p1, Point p2, size_t thickness, RGBA color)
+{
+	if (thickness == 0)
 	{
 		return;
 	}
 
-	// 三角形に分割して塗りつぶし（Fan triangulation）
-	for (size_t i = 1; i < n - 1; ++i)
+	// 方向ベクトル
+	double dx  = (double)(p2.x - p1.x);
+	double dy  = (double)(p2.y - p1.y);
+	double len = sqrt(dx * dx + dy * dy);
+
+	// 長さ0の場合は円を描画
+	if (len < 0.001)
 	{
-		layer_draw_triangle(layer, points[0], points[i], points[i + 1], color);
-	}
-}
-
-// ============================================================================
-// 幾何図形描画関数（アンチエイリアスあり - Wu アルゴリズム）
-// ============================================================================
-
-/// @brief 小数部分を取得
-inline static double frac(double x)
-{
-	return x - floor(x);
-}
-
-/// @brief 1 - 小数部分
-inline static double rfrac(double x)
-{
-	return 1.0 - frac(x);
-}
-
-void layer_draw_line_aa(HLayer layer, Point p1, Point p2, RGBA color)
-{
-	// Xiaolin Wu's line algorithm
-	int steep = abs(p2.y - p1.y) > abs(p2.x - p1.x);
-
-	if (steep)
-	{
-		int t = p1.x;
-		p1.x  = p1.y;
-		p1.y  = t;
-		t     = p2.x;
-		p2.x  = p2.y;
-		p2.y  = t;
-	}
-	if (p1.x > p2.x)
-	{
-		Point t = p1;
-		p1      = p2;
-		p2      = t;
+		layer_draw_circle_aa(layer, p1, thickness / 2, color);
+		return;
 	}
 
-	double dx       = p2.x - p1.x;
-	double dy       = p2.y - p1.y;
-	double gradient = (dx == 0) ? 1.0 : dy / dx;
+	// 法線ベクトル（線に垂直、長さ = thickness/2）
+	double nx = -dy / len * ((double)thickness / 2.0);
+	double ny = dx / len * ((double)thickness / 2.0);
 
-	// 始点
-	double xend  = round(p1.x);
-	double yend  = p1.y + gradient * (xend - p1.x);
-	double xgap  = rfrac(p1.x + 0.5);
-	int    xpxl1 = (int)xend;
-	int    ypxl1 = (int)floor(yend);
+	// 4頂点を計算（doubleで保持）
+	double v0x = (double)p1.x + nx, v0y = (double)p1.y + ny;
+	double v1x = (double)p1.x - nx, v1y = (double)p1.y - ny;
+	double v2x = (double)p2.x - nx, v2y = (double)p2.y - ny;
+	double v3x = (double)p2.x + nx, v3y = (double)p2.y + ny;
 
-	if (steep)
-	{
-		blend_pixel(layer, ypxl1, xpxl1, rgba_from_rgb(color.rgb, color.a * rfrac(yend) * xgap));
-		blend_pixel(layer, ypxl1 + 1, xpxl1, rgba_from_rgb(color.rgb, color.a * frac(yend) * xgap));
-	}
-	else
-	{
-		blend_pixel(layer, xpxl1, ypxl1, rgba_from_rgb(color.rgb, color.a * rfrac(yend) * xgap));
-		blend_pixel(layer, xpxl1, ypxl1 + 1, rgba_from_rgb(color.rgb, color.a * frac(yend) * xgap));
-	}
+	// Edge Function用のポイント（整数に丸める）
+	Point pv0 = POINT((int)round(v0x), (int)round(v0y));
+	Point pv1 = POINT((int)round(v1x), (int)round(v1y));
+	Point pv2 = POINT((int)round(v2x), (int)round(v2y));
+	Point pv3 = POINT((int)round(v3x), (int)round(v3y));
 
-	double intery = yend + gradient;
-
-	// 終点
-	xend      = round(p2.x);
-	yend      = p2.y + gradient * (xend - p2.x);
-	xgap      = frac(p2.x + 0.5);
-	int xpxl2 = (int)xend;
-	int ypxl2 = (int)floor(yend);
-
-	if (steep)
-	{
-		blend_pixel(layer, ypxl2, xpxl2, rgba_from_rgb(color.rgb, color.a * rfrac(yend) * xgap));
-		blend_pixel(layer, ypxl2 + 1, xpxl2, rgba_from_rgb(color.rgb, color.a * frac(yend) * xgap));
-	}
-	else
-	{
-		blend_pixel(layer, xpxl2, ypxl2, rgba_from_rgb(color.rgb, color.a * rfrac(yend) * xgap));
-		blend_pixel(layer, xpxl2, ypxl2 + 1, rgba_from_rgb(color.rgb, color.a * frac(yend) * xgap));
-	}
-
-	// メインループ
-	for (int x = xpxl1 + 1; x < xpxl2; ++x)
-	{
-		if (steep)
-		{
-			blend_pixel(layer, (int)floor(intery), x, rgba_from_rgb(color.rgb, color.a * rfrac(intery)));
-			blend_pixel(layer, (int)floor(intery) + 1, x, rgba_from_rgb(color.rgb, color.a * frac(intery)));
-		}
-		else
-		{
-			blend_pixel(layer, x, (int)floor(intery), rgba_from_rgb(color.rgb, color.a * rfrac(intery)));
-			blend_pixel(layer, x, (int)floor(intery) + 1, rgba_from_rgb(color.rgb, color.a * frac(intery)));
-		}
-		intery += gradient;
-	}
+	// 凸多角形として描画 (v0 -> v3 -> v2 -> v1 の順)
+	Point points[4] = {pv0, pv3, pv2, pv1};
+	layer_draw_polygon_aa(layer, points, 4, color);
 }
 
 void layer_draw_rect_aa(HLayer layer, Point pos, Size size, RGBA color)
@@ -748,10 +803,10 @@ void layer_draw_rect_aa(HLayer layer, Point pos, Size size, RGBA color)
 	Point bl = POINT(pos.x, pos.y + (int)size.h - 1);
 	Point br = POINT(pos.x + (int)size.w - 1, pos.y + (int)size.h - 1);
 
-	layer_draw_line_aa(layer, tl, tr, color);
-	layer_draw_line_aa(layer, tr, br, color);
-	layer_draw_line_aa(layer, br, bl, color);
-	layer_draw_line_aa(layer, bl, tl, color);
+	layer_draw_line_aa(layer, tl, tr, 1, color);
+	layer_draw_line_aa(layer, tr, br, 1, color);
+	layer_draw_line_aa(layer, br, bl, 1, color);
+	layer_draw_line_aa(layer, bl, tl, 1, color);
 }
 
 void layer_draw_circle_aa(HLayer layer, Point center, size_t radius, RGBA color)
@@ -774,88 +829,123 @@ void layer_draw_circle_aa(HLayer layer, Point center, size_t radius, RGBA color)
 	}
 }
 
-/// @brief Edge function: 三角形の辺に対する点の符号付き面積
-static double edge_function(Point a, Point b, double px, double py)
-{
-	return (px - (double)a.x) * ((double)b.y - (double)a.y) - (py - (double)a.y) * ((double)b.x - (double)a.x);
-}
-
-/// @brief min3 ヘルパー
-static int min3(int a, int b, int c)
-{
-	return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
-}
-
-/// @brief max3 ヘルパー
-static int max3(int a, int b, int c)
-{
-	return (a > b) ? ((a > c) ? a : c) : ((b > c) ? b : c);
-}
-
 /// @brief サブピクセルサンプリングでカバレッジを計算（2x2）
-static double calculate_triangle_coverage(Point p1, Point p2, Point p3, int x, int y)
+// 凸多角形を一括で描画（アンチエイリアス対応）
+void layer_draw_polygon_aa(HLayer layer, const Point* points, size_t n, RGBA color)
 {
-	// 2x2 サブピクセルサンプリング
-	static const double offsets[4][2] = {
-		{0.25, 0.25},
-		{0.75, 0.25},
-		{0.25, 0.75},
-		{0.75, 0.75}
-	};
+	if (n < 3) return;
 
-	double coverage = 0.0;
-	for (int i = 0; i < 4; ++i)
+	// バウンディングボックス計算
+	int min_x = (int)layer->width - 1;
+	int max_x = 0;
+	int min_y = (int)layer->height - 1;
+	int max_y = 0;
+
+	for (size_t i = 0; i < n; ++i)
 	{
-		double px = (double)x + offsets[i][0];
-		double py = (double)y + offsets[i][1];
+		if (points[i].x < min_x) min_x = points[i].x;
+		if (points[i].x > max_x) max_x = points[i].x;
+		if (points[i].y < min_y) min_y = points[i].y;
+		if (points[i].y > max_y) max_y = points[i].y;
+	}
 
-		double w0 = edge_function(p2, p3, px, py);
-		double w1 = edge_function(p3, p1, px, py);
-		double w2 = edge_function(p1, p2, px, py);
+	// 画面外判定
+	if (min_x >= (int)layer->width || max_x < 0 || min_y >= (int)layer->height || max_y < 0) return;
 
-		// 同じ符号なら内部
-		if ((w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0))
+	min_x = clamp_int(min_x, 0, (int)layer->width - 1);
+	max_x = clamp_int(max_x, 0, (int)layer->width - 1);
+	min_y = clamp_int(min_y, 0, (int)layer->height - 1);
+	max_y = clamp_int(max_y, 0, (int)layer->height - 1);
+
+	// Edge Equation の係数を事前計算
+	// VLA (Variable Length Array) を使用
+	int    count = (int)n;
+	double nx[count];
+	double ny[count];
+	double c[count];
+
+	// 回転方向を判定 (Y軸下向き: 正=CW, 負=CCW)
+	double signed_area = 0.0;
+	for (size_t i = 0; i < n; ++i)
+	{
+		Point p1     = points[i];
+		Point p2     = points[(i + 1) % n];
+		signed_area += (double)p1.x * (double)p2.y - (double)p2.x * (double)p1.y;
+	}
+
+	// CCWなら法線を反転させるための係数
+	double orientation = (signed_area < 0.0) ? -1.0 : 1.0;
+
+	for (size_t i = 0; i < n; ++i)
+	{
+		Point  p1  = points[i];
+		Point  p2  = points[(i + 1) % n];
+		double dx  = (double)(p2.x - p1.x);
+		double dy  = (double)(p2.y - p1.y);
+		double len = sqrt(dx * dx + dy * dy);
+		if (len > 0.0)
 		{
-			coverage += 0.25;
+			// Edge Function: (px - x1)*dy - (py - y1)*dx
+			// (-dy, dx) は進行方向右側（CW内側）を向く法線
+			// CCWの場合はこれを反転させて内側に向ける
+			nx[i] = (-dy / len) * orientation;
+			ny[i] = (dx / len) * orientation;
+
+			// c項: -(x1*nx + y1*ny)
+			c[i] = -((double)p1.x * nx[i] + (double)p1.y * ny[i]);
+		}
+		else
+		{
+			nx[i] = ny[i] = c[i] = 0.0;
 		}
 	}
-	return coverage;
-}
-
-void layer_draw_triangle_aa(HLayer layer, Point p1, Point p2, Point p3, RGBA color)
-{
-	// バウンディングボックス
-	int min_x = clamp_int(min3(p1.x, p2.x, p3.x), 0, (int)layer->width - 1);
-	int max_x = clamp_int(max3(p1.x, p2.x, p3.x), 0, (int)layer->width - 1);
-	int min_y = clamp_int(min3(p1.y, p2.y, p3.y), 0, (int)layer->height - 1);
-	int max_y = clamp_int(max3(p1.y, p2.y, p3.y), 0, (int)layer->height - 1);
 
 	for (int y = min_y; y <= max_y; ++y)
 	{
 		for (int x = min_x; x <= max_x; ++x)
 		{
-			double coverage = calculate_triangle_coverage(p1, p2, p3, x, y);
-			if (coverage > 0.0)
+			double px = (double)x + 0.5;
+			double py = (double)y + 0.5;
+
+			double min_dist = 1000.0; // 十分大きな値
+			int    inside   = 1;
+
+			// 全エッジに対する距離をチェック
+			for (size_t i = 0; i < n; ++i)
 			{
-				RGBA blended = rgba_from_rgb(color.rgb, color.a * coverage);
-				blend_pixel(layer, x, y, blended);
+				// 距離 (内側が正)
+				double dist = px * nx[i] + py * ny[i] + c[i];
+
+				// 1ピクセル以上外側なら描画対象外（早期終了）
+				if (dist < -0.5)
+				{
+					inside = 0;
+					break;
+				}
+
+				if (dist < min_dist)
+				{
+					min_dist = dist;
+				}
+			}
+
+			if (inside)
+			{
+				// 最小距離に基づいてカバレッジを計算 (-0.5 〜 0.5 の範囲で遷移)
+				double coverage = clamp01(min_dist + 0.5);
+				if (coverage > 0.0)
+				{
+					blend_pixel(layer, x, y, rgba_from_rgb(color.rgb, color.a * coverage));
+				}
 			}
 		}
 	}
 }
 
-void layer_draw_polygon_aa(HLayer layer, const Point* points, size_t n, RGBA color)
+void layer_draw_triangle_aa(HLayer layer, Point p1, Point p2, Point p3, RGBA color)
 {
-	if (n < 3)
-	{
-		return;
-	}
-
-	// 三角形分割（Fan triangulation）で各三角形をAA描画
-	for (size_t i = 1; i < n - 1; ++i)
-	{
-		layer_draw_triangle_aa(layer, points[0], points[i], points[i + 1], color);
-	}
+	Point points[3] = {p1, p2, p3};
+	layer_draw_polygon_aa(layer, points, 3, color);
 }
 
 // ============================================================================

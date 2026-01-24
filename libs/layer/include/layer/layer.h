@@ -154,7 +154,7 @@ void layer_draw_rect(HLayer layer, Point pos, Size size, RGBA color);
 /// @brief 円を塗りつぶし描画する
 void layer_draw_circle(HLayer layer, Point center, size_t radius, RGBA color);
 
-/// @brief 線を描画する（Bresenham アルゴリズム）
+/// @brief 線を描画する（長方形ポリゴン方式）
 void layer_draw_line(HLayer layer, Point p1, Point p2, size_t thickness, RGBA color);
 
 /// @brief 三角形を塗りつぶし描画する
@@ -168,8 +168,8 @@ void layer_draw_polygon(HLayer layer, const Point* points, size_t n, RGBA color)
 // 幾何図形描画関数（アンチエイリアスあり - Wu アルゴリズム）
 // ============================================================================
 
-/// @brief 線を AA 描画する（Xiaolin Wu アルゴリズム）
-void layer_draw_line_aa(HLayer layer, Point p1, Point p2, RGBA color);
+/// @brief 線を AA 描画する（長方形ポリゴン方式 + Edge Function AA）
+void layer_draw_line_aa(HLayer layer, Point p1, Point p2, size_t thickness, RGBA color);
 
 /// @brief 長方形を AA 描画する（境界カバレッジ計算）
 void layer_draw_rect_aa(HLayer layer, Point pos, Size size, RGBA color);

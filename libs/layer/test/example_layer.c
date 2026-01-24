@@ -27,10 +27,10 @@ static void example_draw_line(void)
 	layer_draw_line(layer, POINT(40, 180), POINT(160, 20), 2, rgba_new(1.0, 0.0, 0.0, 1.0));
 	layer_draw_line(layer, POINT(60, 180), POINT(140, 20), 3, rgba_new(0.0, 0.5, 0.0, 1.0));
 
-	// 右: AA あり（Wu）
-	layer_draw_line_aa(layer, POINT(220, 180), POINT(380, 20), rgba_new(0.0, 0.0, 0.0, 1.0));
-	layer_draw_line_aa(layer, POINT(240, 180), POINT(360, 20), rgba_new(1.0, 0.0, 0.0, 1.0));
-	layer_draw_line_aa(layer, POINT(260, 180), POINT(340, 20), rgba_new(0.0, 0.5, 0.0, 1.0));
+	// 右: AA あり（長方形ポリゴン）
+	layer_draw_line_aa(layer, POINT(220, 180), POINT(380, 20), 1, rgba_new(0.0, 0.0, 0.0, 1.0));
+	layer_draw_line_aa(layer, POINT(240, 180), POINT(360, 20), 2, rgba_new(1.0, 0.0, 0.0, 1.0));
+	layer_draw_line_aa(layer, POINT(260, 180), POINT(340, 20), 3, rgba_new(0.0, 0.5, 0.0, 1.0));
 
 	layer_save_p6(layer, "output/examples/draw_line.ppm");
 	printf("Saved: output/examples/draw_line.ppm\n");

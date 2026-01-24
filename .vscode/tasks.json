@@ -71,6 +71,42 @@
             "dependsOn": "CMake Configure (Release)"
         },
         {
+            "label": "CMake Build Test (Debug)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build/debug",
+                "--target",
+                "test_rgba",
+                "--parallel"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": "$gcc",
+            "dependsOn": "CMake Configure (Debug)"
+        },
+        {
+            "label": "CMake Build Test (Release)",
+            "type": "shell",
+            "command": "cmake",
+            "args": [
+                "--build",
+                "build/release",
+                "--target",
+                "test_rgba",
+                "--parallel"
+            ],
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "group": "build",
+            "problemMatcher": "$gcc",
+            "dependsOn": "CMake Configure (Release)"
+        },
+        {
             "label": "CTest Run All (Debug)",
             "type": "shell",
             "command": "ctest",

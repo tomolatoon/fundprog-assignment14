@@ -4,7 +4,7 @@
 
 ## 必要要件
 
-- CMake 3.10 以上
+- CMake 3.14 以上
 - GCC または Clang（C99対応）
 - GDB（デバッグ用）
 
@@ -36,14 +36,15 @@ cmake --build build/release  # Release
 ```
 
 ## 実行方法
-`./build/debug/` 以下と，`./build/release/` 以下に実行ファイルが生成されるので，それを直接実行します
+
+`./build/debug/src/` 以下と，`./build/release/src/` 以下に実行ファイルが生成されるので，それを直接実行します
 
 ```bash
 # Debug
-./build/debug/fundprog-assignment14
+./build/debug/src/fundprog-assignment14
 
 # Release
-./build/release/fundprog-assignment14
+./build/release/src/fundprog-assignment14
 ```
 
 ## VS Code でのデバッグ
@@ -60,6 +61,8 @@ cmake --build build/release  # Release
 2. 利用可能な構成：
    - **Debug: Main** - メインプログラムをデバッグビルド＆実行
    - **Release: Main** - メインプログラムをリリースビルド＆実行
+   - **Debug: Test RGBA** - テストをデバッグビルド＆実行
+   - **Release: Test RGBA** - テストをリリースビルド＆実行
 
 ## テスト実行
 
@@ -79,23 +82,36 @@ VS Code では `Ctrl+Shift+P` → `Tasks: Run Task` → `CTest Run All (Debug)` 
 
 ```
 fundprog-assignment14/
-├── CMakeLists.txt        # CMake設定
-├── .clangd               # clangd設定（Intellisense用）
+├── CMakeLists.txt              # メインCMake設定
+├── cmake/
+│   └── CompilerWarnings.cmake  # コンパイラ警告設定モジュール
+├── .clangd                     # clangd設定（Intellisense用）
 ├── .vscode/
-│   ├── tasks.json        # ビルドタスク
-│   └── launch.json       # デバッグ構成
+│   ├── tasks.json              # ビルドタスク
+│   └── launch.json             # デバッグ構成
 ├── include/
-│   └── rgba.h            # RGB/RGBA構造体・関数宣言
+│   └── rgba.h                  # RGB/RGBA構造体・関数宣言
 ├── src/
-│   ├── main.c            # メインソース
-│   ├── rgba.c            # RGB/RGBA実装
-│   └── test/
-│       └── rgba.c        # Unityテスト
+│   ├── CMakeLists.txt          # ソース用CMake設定
+│   ├── main.c                  # メインソース
+│   └── rgba.c                  # RGB/RGBA実装
+├── test/
+│   ├── CMakeLists.txt          # テスト用CMake設定
+│   └── test_rgba.c             # Unityテスト
 ├── build/
-│   ├── debug/            # Debugビルド成果物
-│   └── release/          # Releaseビルド成果物
+│   ├── debug/                  # Debugビルド成果物
+│   └── release/                # Releaseビルド成果物
 └── README.md
 ```
+
+## CMake構成
+
+モダンCMakeのベストプラクティスに基づき、以下のような構成になっています：
+
+- **ターゲットベース設計**: グローバル変数ではなくターゲットに対して設定を適用
+- **ライブラリ分離**: `rgba_lib` として再利用可能な STATIC ライブラリを定義
+- **モジュール化**: コンパイラ警告設定を `cmake/CompilerWarnings.cmake` に分離
+- **サブディレクトリ構成**: `src/` と `test/` にそれぞれ CMakeLists.txt を配置
 
 ## コンパイルオプション
 

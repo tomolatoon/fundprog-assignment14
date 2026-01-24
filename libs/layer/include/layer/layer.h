@@ -68,6 +68,12 @@ void layer_destroy(HLayer layer);
 /// @note layer が NULL の場合は NULL を返す
 HLayer layer_clone(HLayer layer);
 
+/// @brief 2つのレイヤーの内容を入れ替える
+/// @param[in,out] a レイヤーA
+/// @param[in,out] b レイヤーB
+/// @pre a, b は NULL であってはならない
+void layer_swap(HLayer a, HLayer b);
+
 /// @brief 1D RGBA配列からレイヤーを作成する（データをコピー）
 /// @param[in] size サイズ
 /// @param[in] data RGBA配列（row-major）
@@ -157,17 +163,6 @@ void layer_draw_triangle(HLayer layer, Point p1, Point p2, Point p3, RGBA color)
 /// @brief 多角形を塗りつぶし描画する
 void layer_draw_polygon(HLayer layer, const Point* points, size_t n, RGBA color);
 
-/// @brief 長方形の枠線を描画する
-void layer_draw_rect_outline(HLayer layer, Point pos, Size size, size_t thickness, RGBA color);
-
-/// @brief 円の枠線を描画する
-void layer_draw_circle_outline(HLayer layer, Point center, size_t radius, size_t thickness, RGBA color);
-
-/// @brief 三角形の枠線を描画する
-void layer_draw_triangle_outline(HLayer layer, Point p1, Point p2, Point p3, size_t thickness, RGBA color);
-
-/// @brief 多角形の枠線を描画する
-void layer_draw_polygon_outline(HLayer layer, const Point* points, size_t n, size_t thickness, RGBA color);
 
 // ============================================================================
 // 幾何図形描画関数（アンチエイリアスあり - Wu アルゴリズム）
@@ -188,17 +183,6 @@ void layer_draw_triangle_aa(HLayer layer, Point p1, Point p2, Point p3, RGBA col
 /// @brief 多角形を AA 描画する（各辺を Wu 線で描画）
 void layer_draw_polygon_aa(HLayer layer, const Point* points, size_t n, RGBA color);
 
-/// @brief 長方形枠線を AA 描画する
-void layer_draw_rect_outline_aa(HLayer layer, Point pos, Size size, size_t thickness, RGBA color);
-
-/// @brief 円枠線を AA 描画する
-void layer_draw_circle_outline_aa(HLayer layer, Point center, size_t radius, size_t thickness, RGBA color);
-
-/// @brief 三角形枠線を AA 描画する
-void layer_draw_triangle_outline_aa(HLayer layer, Point p1, Point p2, Point p3, size_t thickness, RGBA color);
-
-/// @brief 多角形枠線を AA 描画する
-void layer_draw_polygon_outline_aa(HLayer layer, const Point* points, size_t n, size_t thickness, RGBA color);
 
 // ============================================================================
 // 変形関数（破壊的変更 - layer 自体を変更）
@@ -207,8 +191,11 @@ void layer_draw_polygon_outline_aa(HLayer layer, const Point* points, size_t n, 
 /// @brief レイヤーを切り抜く（破壊的）
 void layer_clip(HLayer layer, Point pos, Size size);
 
-/// @brief レイヤーをリサイズする（破壊的）
-void layer_resize(HLayer layer, Size new_size);
+/// @brief レイヤーをリサイズする（破壊的、Nearest Neighbor補間）
+void layer_resize_nearest(HLayer layer, Size new_size);
+
+/// @brief レイヤーをリサイズする（破壊的、Bilinear補間）
+void layer_resize_bilinear(HLayer layer, Size new_size);
 
 /// @brief レイヤーを水平反転する（破壊的）
 void layer_flip_horizontal(HLayer layer);
@@ -226,8 +213,11 @@ void layer_downsample_2x(HLayer layer);
 /// @brief レイヤーを切り抜いた新しいレイヤーを作成する
 HLayer layer_clip_to(HLayer layer, Point pos, Size size);
 
-/// @brief レイヤーをリサイズした新しいレイヤーを作成する
-HLayer layer_resize_to(HLayer layer, Size new_size);
+/// @brief レイヤーをリサイズした新しいレイヤーを作成する（Nearest Neighbor補間）
+HLayer layer_resize_nearest_to(HLayer layer, Size new_size);
+
+/// @brief レイヤーをリサイズした新しいレイヤーを作成する（Bilinear補間）
+HLayer layer_resize_bilinear_to(HLayer layer, Size new_size);
 
 /// @brief レイヤーを水平反転した新しいレイヤーを作成する
 HLayer layer_flip_horizontal_to(HLayer layer);

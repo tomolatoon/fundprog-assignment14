@@ -53,15 +53,6 @@ inline static double clamp01(double v)
 	return v;
 }
 
-/// @brief 内部用: ピクセルを直接設定（範囲チェックあり）
-inline static void set_pixel_safe(HLayer layer, int x, int y, RGBA color)
-{
-	if (is_inside(layer, x, y))
-	{
-		layer->pixels[pixel_index(layer, x, y)] = color;
-	}
-}
-
 /// @brief 内部用: ピクセルをブレンド設定（AA用）
 inline static void blend_pixel(HLayer layer, int x, int y, RGBA color)
 {
@@ -88,6 +79,21 @@ inline static void blend_pixel(HLayer layer, int x, int y, RGBA color)
 	{                                                                                                                       \
 		return NULL;                                                                                                        \
 	}
+
+/// @brief ピクセルへの直接参照（範囲チェックなし）
+#define PIXEL_AT(layer, x, y) ((layer)->pixels[(y) * (layer)->width + (x)])
+
+/// @brief 一時レイヤーから内容を移譲し、一時レイヤーのシェルを解放
+#define LAYER_ADOPT_TEMP(layer, temp)                                                                                       \
+	do                                                                                                                      \
+	{                                                                                                                       \
+		if ((temp) == NULL) return;                                                                                         \
+		free((layer)->pixels);                                                                                              \
+		(layer)->width  = (temp)->width;                                                                                    \
+		(layer)->height = (temp)->height;                                                                                   \
+		(layer)->pixels = (temp)->pixels;                                                                                   \
+		free(temp);                                                                                                         \
+	} while (0)
 
 HLayer layer_create(Size size)
 {
@@ -133,6 +139,27 @@ HLayer layer_clone(HLayer layer)
 
 	memcpy(clone->pixels, layer->pixels, layer->width * layer->height * sizeof(RGBA));
 	return clone;
+}
+
+void layer_swap(HLayer a, HLayer b)
+{
+	if (a == NULL || b == NULL)
+	{
+		return;
+	}
+
+	// 構造体の全メンバを入れ替え
+	size_t tmp_width  = a->width;
+	size_t tmp_height = a->height;
+	RGBA*  tmp_pixels = a->pixels;
+
+	a->width  = b->width;
+	a->height = b->height;
+	a->pixels = b->pixels;
+
+	b->width  = tmp_width;
+	b->height = tmp_height;
+	b->pixels = tmp_pixels;
 }
 
 HLayer layer_from_rgba_1d(Size size, const RGBA* data)
@@ -221,7 +248,10 @@ RGBA layer_get_pixel(HLayer layer, Point p)
 
 void layer_set_pixel(HLayer layer, Point p, RGBA color)
 {
-	set_pixel_safe(layer, p.x, p.y, color);
+	if (is_inside(layer, p.x, p.y))
+	{
+		layer->pixels[pixel_index(layer, p.x, p.y)] = color;
+	}
 }
 
 void layer_fill(HLayer layer, RGBA color)
@@ -486,7 +516,7 @@ void layer_draw_line(HLayer layer, Point p1, Point p2, size_t thickness, RGBA co
 		// thickness > 1 の場合は周囲にも描画
 		if (thickness <= 1)
 		{
-			set_pixel_safe(layer, x, y, color);
+			layer_set_pixel(layer, POINT(x, y), color);
 		}
 		else
 		{
@@ -495,7 +525,7 @@ void layer_draw_line(HLayer layer, Point p1, Point p2, size_t thickness, RGBA co
 			{
 				for (int tx = -half; tx <= half; ++tx)
 				{
-					set_pixel_safe(layer, x + tx, y + ty, color);
+					layer_set_pixel(layer, POINT(x + tx, y + ty), color);
 				}
 			}
 		}
@@ -530,7 +560,7 @@ void layer_draw_circle(HLayer layer, Point center, size_t radius, RGBA color)
 		{
 			if (dx * dx + dy * dy <= r2)
 			{
-				set_pixel_safe(layer, center.x + dx, center.y + dy, color);
+				layer_set_pixel(layer, POINT(center.x + dx, center.y + dy), color);
 			}
 		}
 	}
@@ -586,7 +616,7 @@ static void fill_triangle_scanline(HLayer layer, Point p1, Point p2, Point p3, R
 
 		for (int x = ax; x <= bx; ++x)
 		{
-			set_pixel_safe(layer, x, y, color);
+			layer_set_pixel(layer, POINT(x, y), color);
 		}
 	}
 }
@@ -607,57 +637,6 @@ void layer_draw_polygon(HLayer layer, const Point* points, size_t n, RGBA color)
 	for (size_t i = 1; i < n - 1; ++i)
 	{
 		layer_draw_triangle(layer, points[0], points[i], points[i + 1], color);
-	}
-}
-
-void layer_draw_rect_outline(HLayer layer, Point pos, Size size, size_t thickness, RGBA color)
-{
-	Point tl = pos;
-	Point tr = POINT(pos.x + (int)size.w - 1, pos.y);
-	Point bl = POINT(pos.x, pos.y + (int)size.h - 1);
-	Point br = POINT(pos.x + (int)size.w - 1, pos.y + (int)size.h - 1);
-
-	layer_draw_line(layer, tl, tr, thickness, color);
-	layer_draw_line(layer, tr, br, thickness, color);
-	layer_draw_line(layer, br, bl, thickness, color);
-	layer_draw_line(layer, bl, tl, thickness, color);
-}
-
-void layer_draw_circle_outline(HLayer layer, Point center, size_t radius, size_t thickness, RGBA color)
-{
-	int r      = (int)radius;
-	int inner2 = (r - (int)thickness) * (r - (int)thickness);
-	int outer2 = r * r;
-
-	for (int dy = -r; dy <= r; ++dy)
-	{
-		for (int dx = -r; dx <= r; ++dx)
-		{
-			int d2 = dx * dx + dy * dy;
-			if (d2 <= outer2 && d2 >= inner2)
-			{
-				set_pixel_safe(layer, center.x + dx, center.y + dy, color);
-			}
-		}
-	}
-}
-
-void layer_draw_triangle_outline(HLayer layer, Point p1, Point p2, Point p3, size_t thickness, RGBA color)
-{
-	layer_draw_line(layer, p1, p2, thickness, color);
-	layer_draw_line(layer, p2, p3, thickness, color);
-	layer_draw_line(layer, p3, p1, thickness, color);
-}
-
-void layer_draw_polygon_outline(HLayer layer, const Point* points, size_t n, size_t thickness, RGBA color)
-{
-	if (n < 2)
-	{
-		return;
-	}
-	for (size_t i = 0; i < n; ++i)
-	{
-		layer_draw_line(layer, points[i], points[(i + 1) % n], thickness, color);
 	}
 }
 
@@ -759,9 +738,20 @@ void layer_draw_line_aa(HLayer layer, Point p1, Point p2, RGBA color)
 
 void layer_draw_rect_aa(HLayer layer, Point pos, Size size, RGBA color)
 {
-	// 内部を塗りつぶし、エッジを AA 線で描画
-	layer_draw_rect(layer, POINT(pos.x + 1, pos.y + 1), SIZE(size.w - 2, size.h - 2), color);
-	layer_draw_rect_outline_aa(layer, pos, size, 1, color);
+	// 矩形は軸平行のため、内部を非AAで塗りつぶしてエッジをAA線で描画
+	// 境界ピクセルのカバレッジを計算するより内部塗り+エッジがシンプル
+	layer_draw_rect(layer, pos, size, color);
+
+	// 4辺をAA線で上書き（エッジを滑らかにする）
+	Point tl = pos;
+	Point tr = POINT(pos.x + (int)size.w - 1, pos.y);
+	Point bl = POINT(pos.x, pos.y + (int)size.h - 1);
+	Point br = POINT(pos.x + (int)size.w - 1, pos.y + (int)size.h - 1);
+
+	layer_draw_line_aa(layer, tl, tr, color);
+	layer_draw_line_aa(layer, tr, br, color);
+	layer_draw_line_aa(layer, br, bl, color);
+	layer_draw_line_aa(layer, bl, tl, color);
 }
 
 void layer_draw_circle_aa(HLayer layer, Point center, size_t radius, RGBA color)
@@ -784,14 +774,74 @@ void layer_draw_circle_aa(HLayer layer, Point center, size_t radius, RGBA color)
 	}
 }
 
+/// @brief Edge function: 三角形の辺に対する点の符号付き面積
+static double edge_function(Point a, Point b, double px, double py)
+{
+	return (px - (double)a.x) * ((double)b.y - (double)a.y) - (py - (double)a.y) * ((double)b.x - (double)a.x);
+}
+
+/// @brief min3 ヘルパー
+static int min3(int a, int b, int c)
+{
+	return (a < b) ? ((a < c) ? a : c) : ((b < c) ? b : c);
+}
+
+/// @brief max3 ヘルパー
+static int max3(int a, int b, int c)
+{
+	return (a > b) ? ((a > c) ? a : c) : ((b > c) ? b : c);
+}
+
+/// @brief サブピクセルサンプリングでカバレッジを計算（2x2）
+static double calculate_triangle_coverage(Point p1, Point p2, Point p3, int x, int y)
+{
+	// 2x2 サブピクセルサンプリング
+	static const double offsets[4][2] = {
+		{0.25, 0.25},
+		{0.75, 0.25},
+		{0.25, 0.75},
+		{0.75, 0.75}
+	};
+
+	double coverage = 0.0;
+	for (int i = 0; i < 4; ++i)
+	{
+		double px = (double)x + offsets[i][0];
+		double py = (double)y + offsets[i][1];
+
+		double w0 = edge_function(p2, p3, px, py);
+		double w1 = edge_function(p3, p1, px, py);
+		double w2 = edge_function(p1, p2, px, py);
+
+		// 同じ符号なら内部
+		if ((w0 >= 0 && w1 >= 0 && w2 >= 0) || (w0 <= 0 && w1 <= 0 && w2 <= 0))
+		{
+			coverage += 0.25;
+		}
+	}
+	return coverage;
+}
+
 void layer_draw_triangle_aa(HLayer layer, Point p1, Point p2, Point p3, RGBA color)
 {
-	// 内部を塗りつぶし
-	layer_draw_triangle(layer, p1, p2, p3, color);
-	// エッジを AA 線で描画
-	layer_draw_line_aa(layer, p1, p2, color);
-	layer_draw_line_aa(layer, p2, p3, color);
-	layer_draw_line_aa(layer, p3, p1, color);
+	// バウンディングボックス
+	int min_x = clamp_int(min3(p1.x, p2.x, p3.x), 0, (int)layer->width - 1);
+	int max_x = clamp_int(max3(p1.x, p2.x, p3.x), 0, (int)layer->width - 1);
+	int min_y = clamp_int(min3(p1.y, p2.y, p3.y), 0, (int)layer->height - 1);
+	int max_y = clamp_int(max3(p1.y, p2.y, p3.y), 0, (int)layer->height - 1);
+
+	for (int y = min_y; y <= max_y; ++y)
+	{
+		for (int x = min_x; x <= max_x; ++x)
+		{
+			double coverage = calculate_triangle_coverage(p1, p2, p3, x, y);
+			if (coverage > 0.0)
+			{
+				RGBA blended = rgba_from_rgb(color.rgb, color.a * coverage);
+				blend_pixel(layer, x, y, blended);
+			}
+		}
+	}
 }
 
 void layer_draw_polygon_aa(HLayer layer, const Point* points, size_t n, RGBA color)
@@ -800,66 +850,11 @@ void layer_draw_polygon_aa(HLayer layer, const Point* points, size_t n, RGBA col
 	{
 		return;
 	}
-	layer_draw_polygon(layer, points, n, color);
-	for (size_t i = 0; i < n; ++i)
+
+	// 三角形分割（Fan triangulation）で各三角形をAA描画
+	for (size_t i = 1; i < n - 1; ++i)
 	{
-		layer_draw_line_aa(layer, points[i], points[(i + 1) % n], color);
-	}
-}
-
-void layer_draw_rect_outline_aa(HLayer layer, Point pos, Size size, size_t thickness, RGBA color)
-{
-	(void)thickness; // AA版は thickness=1 として扱う
-	Point tl = pos;
-	Point tr = POINT(pos.x + (int)size.w - 1, pos.y);
-	Point bl = POINT(pos.x, pos.y + (int)size.h - 1);
-	Point br = POINT(pos.x + (int)size.w - 1, pos.y + (int)size.h - 1);
-
-	layer_draw_line_aa(layer, tl, tr, color);
-	layer_draw_line_aa(layer, tr, br, color);
-	layer_draw_line_aa(layer, br, bl, color);
-	layer_draw_line_aa(layer, bl, tl, color);
-}
-
-void layer_draw_circle_outline_aa(HLayer layer, Point center, size_t radius, size_t thickness, RGBA color)
-{
-	(void)thickness;
-	int r = (int)radius;
-
-	for (int y = -r - 1; y <= r + 1; ++y)
-	{
-		for (int x = -r - 1; x <= r + 1; ++x)
-		{
-			double dist     = sqrt((double)(x * x + y * y));
-			double coverage = clamp01(1.0 - fabs(dist - (double)r));
-
-			if (coverage > 0.0)
-			{
-				RGBA blended = rgba_from_rgb(color.rgb, color.a * coverage);
-				blend_pixel(layer, center.x + x, center.y + y, blended);
-			}
-		}
-	}
-}
-
-void layer_draw_triangle_outline_aa(HLayer layer, Point p1, Point p2, Point p3, size_t thickness, RGBA color)
-{
-	(void)thickness;
-	layer_draw_line_aa(layer, p1, p2, color);
-	layer_draw_line_aa(layer, p2, p3, color);
-	layer_draw_line_aa(layer, p3, p1, color);
-}
-
-void layer_draw_polygon_outline_aa(HLayer layer, const Point* points, size_t n, size_t thickness, RGBA color)
-{
-	(void)thickness;
-	if (n < 2)
-	{
-		return;
-	}
-	for (size_t i = 0; i < n; ++i)
-	{
-		layer_draw_line_aa(layer, points[i], points[(i + 1) % n], color);
+		layer_draw_triangle_aa(layer, points[0], points[i], points[i + 1], color);
 	}
 }
 
@@ -885,7 +880,7 @@ HLayer layer_clip_to(HLayer layer, Point pos, Size size)
 	return result;
 }
 
-HLayer layer_resize_to(HLayer layer, Size new_size)
+HLayer layer_resize_nearest_to(HLayer layer, Size new_size)
 {
 	HLayer result = layer_create(new_size);
 	if (result == NULL)
@@ -903,6 +898,67 @@ HLayer layer_resize_to(HLayer layer, Size new_size)
 			int src_x                          = (int)((double)x * x_scale);
 			int src_y                          = (int)((double)y * y_scale);
 			result->pixels[y * new_size.w + x] = layer_get_pixel(layer, POINT(src_x, src_y));
+		}
+	}
+	return result;
+}
+
+/// @brief RGBAの加重平均（Bilinear補間用）
+static RGBA rgba_lerp_bilinear(RGBA tl, RGBA tr, RGBA bl, RGBA br, double fx, double fy)
+{
+	// 上辺の補間
+	double t_r = tl.rgb.r * (1.0 - fx) + tr.rgb.r * fx;
+	double t_g = tl.rgb.g * (1.0 - fx) + tr.rgb.g * fx;
+	double t_b = tl.rgb.b * (1.0 - fx) + tr.rgb.b * fx;
+	double t_a = tl.a * (1.0 - fx) + tr.a * fx;
+
+	// 下辺の補間
+	double b_r = bl.rgb.r * (1.0 - fx) + br.rgb.r * fx;
+	double b_g = bl.rgb.g * (1.0 - fx) + br.rgb.g * fx;
+	double b_b = bl.rgb.b * (1.0 - fx) + br.rgb.b * fx;
+	double b_a = bl.a * (1.0 - fx) + br.a * fx;
+
+	// 上下の補間
+	return rgba_new(
+		t_r * (1.0 - fy) + b_r * fy,
+		t_g * (1.0 - fy) + b_g * fy,
+		t_b * (1.0 - fy) + b_b * fy,
+		t_a * (1.0 - fy) + b_a * fy
+	);
+}
+
+HLayer layer_resize_bilinear_to(HLayer layer, Size new_size)
+{
+	HLayer result = layer_create(new_size);
+	if (result == NULL)
+	{
+		return NULL;
+	}
+
+	double x_scale = (double)(layer->width - 1) / (double)(new_size.w - 1);
+	double y_scale = (double)(layer->height - 1) / (double)(new_size.h - 1);
+
+	for (size_t y = 0; y < new_size.h; ++y)
+	{
+		for (size_t x = 0; x < new_size.w; ++x)
+		{
+			double src_x = (double)x * x_scale;
+			double src_y = (double)y * y_scale;
+
+			int x0 = (int)floor(src_x);
+			int y0 = (int)floor(src_y);
+			int x1 = clamp_int(x0 + 1, 0, (int)layer->width - 1);
+			int y1 = clamp_int(y0 + 1, 0, (int)layer->height - 1);
+
+			double fx = src_x - (double)x0;
+			double fy = src_y - (double)y0;
+
+			RGBA tl = layer_get_pixel(layer, POINT(x0, y0));
+			RGBA tr = layer_get_pixel(layer, POINT(x1, y0));
+			RGBA bl = layer_get_pixel(layer, POINT(x0, y1));
+			RGBA br = layer_get_pixel(layer, POINT(x1, y1));
+
+			result->pixels[y * new_size.w + x] = rgba_lerp_bilinear(tl, tr, bl, br, fx, fy);
 		}
 	}
 	return result;
@@ -936,11 +992,7 @@ HLayer layer_flip_vertical_to(HLayer layer)
 
 	for (size_t y = 0; y < layer->height; ++y)
 	{
-		memcpy(
-			&result->pixels[y * layer->width],
-			&layer->pixels[(layer->height - 1 - y) * layer->width],
-			layer->width * sizeof(RGBA)
-		);
+		memcpy(&result->pixels[y * layer->width], &PIXEL_AT(layer, 0, layer->height - 1 - y), layer->width * sizeof(RGBA));
 	}
 	return result;
 }
@@ -959,17 +1011,20 @@ HLayer layer_downsample_2x_to(HLayer layer)
 		for (size_t x = 0; x < new_size.w; ++x)
 		{
 			// 2x2 ピクセルの平均
-			RGBA tl = layer->pixels[(y * 2) * layer->width + (x * 2)];
-			RGBA tr = layer->pixels[(y * 2) * layer->width + (x * 2 + 1)];
-			RGBA bl = layer->pixels[(y * 2 + 1) * layer->width + (x * 2)];
-			RGBA br = layer->pixels[(y * 2 + 1) * layer->width + (x * 2 + 1)];
+			RGBA tl = PIXEL_AT(layer, x * 2, y * 2);
+			RGBA tr = PIXEL_AT(layer, x * 2 + 1, y * 2);
+			RGBA bl = PIXEL_AT(layer, x * 2, y * 2 + 1);
+			RGBA br = PIXEL_AT(layer, x * 2 + 1, y * 2 + 1);
 
-			double r = (tl.rgb.r + tr.rgb.r + bl.rgb.r + br.rgb.r) / 4.0;
-			double g = (tl.rgb.g + tr.rgb.g + bl.rgb.g + br.rgb.g) / 4.0;
-			double b = (tl.rgb.b + tr.rgb.b + bl.rgb.b + br.rgb.b) / 4.0;
+			RGB tl_rgb = rgba_apply_alpha(tl);
+			RGB tr_rgb = rgba_apply_alpha(tr);
+			RGB bl_rgb = rgba_apply_alpha(bl);
+			RGB br_rgb = rgba_apply_alpha(br);
+
+			RGB    r = rgb_mul(rgb_add(rgb_add(tl_rgb, tr_rgb), rgb_add(bl_rgb, br_rgb)), 0.25);
 			double a = (tl.a + tr.a + bl.a + br.a) / 4.0;
 
-			result->pixels[y * new_size.w + x] = rgba_new(r, g, b, a);
+			PIXEL_AT(result, x, y) = (RGBA){r, a};
 		}
 	}
 	return result;
@@ -982,31 +1037,19 @@ HLayer layer_downsample_2x_to(HLayer layer)
 void layer_clip(HLayer layer, Point pos, Size size)
 {
 	HLayer temp = layer_clip_to(layer, pos, size);
-	if (temp == NULL)
-	{
-		return;
-	}
-
-	free(layer->pixels);
-	layer->width  = temp->width;
-	layer->height = temp->height;
-	layer->pixels = temp->pixels;
-	free(temp); // pixels は移譲したので temp のみ解放
+	LAYER_ADOPT_TEMP(layer, temp);
 }
 
-void layer_resize(HLayer layer, Size new_size)
+void layer_resize_nearest(HLayer layer, Size new_size)
 {
-	HLayer temp = layer_resize_to(layer, new_size);
-	if (temp == NULL)
-	{
-		return;
-	}
+	HLayer temp = layer_resize_nearest_to(layer, new_size);
+	LAYER_ADOPT_TEMP(layer, temp);
+}
 
-	free(layer->pixels);
-	layer->width  = temp->width;
-	layer->height = temp->height;
-	layer->pixels = temp->pixels;
-	free(temp);
+void layer_resize_bilinear(HLayer layer, Size new_size)
+{
+	HLayer temp = layer_resize_bilinear_to(layer, new_size);
+	LAYER_ADOPT_TEMP(layer, temp);
 }
 
 void layer_flip_horizontal(HLayer layer)
@@ -1034,8 +1077,8 @@ void layer_flip_vertical(HLayer layer)
 
 	for (size_t y = 0; y < layer->height / 2; ++y)
 	{
-		RGBA* top    = &layer->pixels[y * layer->width];
-		RGBA* bottom = &layer->pixels[(layer->height - 1 - y) * layer->width];
+		RGBA* top    = &PIXEL_AT(layer, 0, y);
+		RGBA* bottom = &PIXEL_AT(layer, 0, layer->height - 1 - y);
 		memcpy(row_buf, top, layer->width * sizeof(RGBA));
 		memcpy(top, bottom, layer->width * sizeof(RGBA));
 		memcpy(bottom, row_buf, layer->width * sizeof(RGBA));
@@ -1046,16 +1089,7 @@ void layer_flip_vertical(HLayer layer)
 void layer_downsample_2x(HLayer layer)
 {
 	HLayer temp = layer_downsample_2x_to(layer);
-	if (temp == NULL)
-	{
-		return;
-	}
-
-	free(layer->pixels);
-	layer->width  = temp->width;
-	layer->height = temp->height;
-	layer->pixels = temp->pixels;
-	free(temp);
+	LAYER_ADOPT_TEMP(layer, temp);
 }
 
 // ============================================================================
@@ -1082,8 +1116,9 @@ void layer_composite(HLayer dst, HLayer src, Point pos, BlendFunc blend)
 				continue;
 			}
 
-			RGBA src_px                                       = src->pixels[sy * src->width + sx];
-			RGBA dst_px                                       = dst->pixels[(size_t)dy * dst->width + (size_t)dx];
+			RGBA src_px = src->pixels[sy * src->width + sx];
+			RGBA dst_px = dst->pixels[(size_t)dy * dst->width + (size_t)dx];
+
 			dst->pixels[(size_t)dy * dst->width + (size_t)dx] = blend_fn(dst_px, src_px);
 		}
 	}

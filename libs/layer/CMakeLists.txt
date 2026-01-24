@@ -40,8 +40,8 @@ set_strict_warnings(layer_lib)
 # ------------------------------------------------------------------------------
 # テスト設定
 # ------------------------------------------------------------------------------
-file(GLOB_RECURSE LAYER_TEST_SOURCES CONFIGURE_DEPENDS
-    "${CMAKE_CURRENT_SOURCE_DIR}/test/*.c"
+file(GLOB LAYER_TEST_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/test_*.c"
 )
 
 if(LAYER_TEST_SOURCES)
@@ -55,3 +55,17 @@ if(LAYER_TEST_SOURCES)
     set_basic_warnings(test_layer)
     add_test(NAME test_layer COMMAND test_layer)
 endif()
+
+# ------------------------------------------------------------------------------
+# Example 設定
+# ------------------------------------------------------------------------------
+file(GLOB LAYER_EXAMPLE_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/example_*.c"
+)
+
+foreach(EXAMPLE_SOURCE ${LAYER_EXAMPLE_SOURCES})
+    get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
+    add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCE})
+    target_link_libraries(${EXAMPLE_NAME} PRIVATE layer_lib m)
+    set_basic_warnings(${EXAMPLE_NAME})
+endforeach()

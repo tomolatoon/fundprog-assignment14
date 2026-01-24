@@ -111,6 +111,47 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
 
 ---
 
+## test/ ディレクトリの命名規約
+
+`libs/*/test/` 内のファイルは命名規則で自動的に分類されます:
+
+| パターン | 用途 | 例 |
+|----------|------|-----|
+| `test_*.c` | ユニットテスト（Unity フレームワーク） | `test_layer.c` |
+| `example_*.c` | 機能デモ（画像出力など） | `example_layer.c` |
+
+### CMake での処理
+
+```cmake
+# テスト: test_*.c → 単一の test_layer 実行ファイル
+file(GLOB LAYER_TEST_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/test_*.c"
+)
+
+# Example: example_*.c → 各ファイルが独立した実行ファイル
+file(GLOB LAYER_EXAMPLE_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/test/example_*.c"
+)
+
+foreach(EXAMPLE_SOURCE ${LAYER_EXAMPLE_SOURCES})
+    get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
+    add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCE})
+    target_link_libraries(${EXAMPLE_NAME} PRIVATE layer_lib m)
+endforeach()
+```
+
+### 実行方法
+
+```bash
+# テスト
+ctest --test-dir build/debug
+
+# Example
+./build/debug/libs/layer/example_layer
+```
+
+---
+
 ## 関連
 
 - [CMake Documentation](https://cmake.org/cmake/help/latest/)

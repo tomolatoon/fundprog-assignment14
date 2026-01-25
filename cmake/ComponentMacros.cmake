@@ -42,9 +42,9 @@ function(add_video_component name)
 
     set_strict_warnings(${name}_lib)
 
-    # テストファイル自動検出
-    file(GLOB_RECURSE TEST_SOURCES CONFIGURE_DEPENDS
-        "${CMAKE_CURRENT_SOURCE_DIR}/test/*.c"
+    # テストファイル (test_*.c) -> 単一のテスト実行ファイル
+    file(GLOB TEST_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/test/test_*.c"
     )
 
     if(TEST_SOURCES)
@@ -57,4 +57,16 @@ function(add_video_component name)
         set_basic_warnings(test_${name})
         add_test(NAME test_${name} COMMAND test_${name})
     endif()
+
+    # 例ファイル (example_*.c) -> 個別の実行ファイル
+    file(GLOB EXAMPLE_SOURCES CONFIGURE_DEPENDS
+        "${CMAKE_CURRENT_SOURCE_DIR}/test/example_*.c"
+    )
+
+    foreach(EXAMPLE_SOURCE ${EXAMPLE_SOURCES})
+        get_filename_component(EXAMPLE_NAME ${EXAMPLE_SOURCE} NAME_WE)
+        add_executable(${EXAMPLE_NAME} ${EXAMPLE_SOURCE})
+        target_link_libraries(${EXAMPLE_NAME} PRIVATE ${name}_lib m)
+        set_basic_warnings(${EXAMPLE_NAME})
+    endforeach()
 endfunction()

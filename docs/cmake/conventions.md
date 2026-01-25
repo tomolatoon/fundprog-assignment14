@@ -113,7 +113,8 @@ file(GLOB_RECURSE SOURCES CONFIGURE_DEPENDS
 
 ## test/ ディレクトリの命名規約
 
-`libs/*/test/` 内のファイルは命名規則で自動的に分類されます:
+`libs/*/test/` および `components/*/test/` 内のファイルは命名規則で自動的に分類されます。
+この規約は `add_video_component` マクロを使用するコンポーネントにも適用されます。
 
 | パターン | 用途 | 例 |
 |----------|------|-----|

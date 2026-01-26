@@ -106,7 +106,7 @@ cmake --build build/release/build
 ### テスト実行
 
 ```bash
-ctest --test-dir build/debug --output-on-failure
+ctest --test-dir build/linux-debug/build --output-on-failure
 ```
 
 成功すると以下のような出力が表示されます:
@@ -173,9 +173,10 @@ xcode-select --install            # macOS
 
 ### clangd の警告が消えない
 
-ビルド後、`compile_commands.json` が生成されます。VS Code を再起動すると警告が解消されます。
+ビルド後、`compile_commands.json` が生成されます。ビルド後、`.clangd` のパスを適切なフォルダを指定すると警告は解除されます。
 
 ```bash
-# compile_commands.json の場所を確認
-ls build/linux-debug/build/compile_commands.json
+CompileFlags:
+  CompilationDatabase: build/linux-debug/build
+
 ```

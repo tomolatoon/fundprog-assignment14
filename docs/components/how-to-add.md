@@ -150,7 +150,7 @@ int main(void)
 テストの実行：
 
 ```bash
-ctest --test-dir build/debug -R "test_<your-id>"
+ctest --test-dir build/linux-debug/build -R "test_<your-id>"
 ```
 
 ---

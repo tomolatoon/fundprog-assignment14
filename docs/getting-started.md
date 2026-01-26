@@ -73,12 +73,12 @@ CMake のバージョンが古い場合は、プリセットを使わずにコ�
 
 ```bash
 # Debug
-cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build build/debug
+cmake -B build/debug/build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug/build
 
 # Release
-cmake -B build/release -DCMAKE_BUILD_TYPE=Release
-cmake --build build/release
+cmake -B build/release/build -DCMAKE_BUILD_TYPE=Release
+cmake --build build/release/build
 ```
 
 また、Ninja が使用できない環境では次のようなコマンドライン引数も同時に与えてください。
@@ -94,9 +94,10 @@ cmake --build build/release
 
 | ファイル | 説明 |
 |---------|------|
-| `build/debug/app/video_composer` | 統合アプリケーション |
-| `build/debug/libs/rgba/test_rgba` | RGBA ライブラリのテスト |
-| `build/debug/libs/*/lib*.a` | 各ライブラリの静的ライブラリ |
+| `build/linux-debug/bin/video_composer` | 統合アプリケーション |
+| `build/linux-debug/bin/test_rgba` | RGBA ライブラリのテスト |
+| `build/linux-debug/lib/lib*.a` | 各ライブラリの静的ライブラリ |
+| `build/linux-debug/build/` | 中間ファイル (Ninja ビルド定義など) |
 
 ---
 
@@ -121,7 +122,7 @@ Test project /path/to/build/debug
 ### アプリケーション実行
 
 ```bash
-./build/debug/app/video_composer
+./build/linux-debug/bin/video_composer
 ```
 
 出力例：
@@ -176,5 +177,5 @@ xcode-select --install            # macOS
 
 ```bash
 # compile_commands.json の場所を確認
-ls build/debug/compile_commands.json
+ls build/linux-debug/build/compile_commands.json
 ```

@@ -10,7 +10,7 @@
       "name": "linux-debug",
       "displayName": "Linux Debug",
       "description": "Debug build for Linux",
-      "binaryDir": "${sourceDir}/build/linux-debug",
+      "binaryDir": "${sourceDir}/build/linux-debug/build",
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug"
@@ -20,7 +20,7 @@
       "name": "linux-release",
       "displayName": "Linux Release",
       "description": "Release build for Linux",
-      "binaryDir": "${sourceDir}/build/linux-release",
+      "binaryDir": "${sourceDir}/build/linux-release/build",
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release"
@@ -30,7 +30,7 @@
       "name": "windows-debug",
       "displayName": "Windows Debug",
       "description": "Debug build for Windows using MinGW (GCC) and Ninja",
-      "binaryDir": "${sourceDir}/build/windows-debug",
+      "binaryDir": "${sourceDir}/build/windows-debug/build",
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Debug",
@@ -41,7 +41,7 @@
       "name": "windows-release",
       "displayName": "Windows Release",
       "description": "Release build for Windows using MinGW (GCC) and Ninja",
-      "binaryDir": "${sourceDir}/build/windows-release",
+      "binaryDir": "${sourceDir}/build/windows-release/build",
       "generator": "Ninja",
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",

@@ -33,15 +33,16 @@ cmake --preset linux-debug  # Linux
 cmake --preset windows-debug  # Windows (MinGW)
 
 # ビルド
-cmake --build build/ilnux-debug  # Linux
-cmake --build build/windows-debug  # Windows (MinGW)
+cmake --build build/linux-debug/build  # Linux
+cmake --build build/windows-debug/build  # Windows (MinGW)
 
 # 実行
-./build/debug/app/video_composer  # Linux
-./build/windows-debug/app/video_composer.exe  # Windows
+./build/linux-debug/bin/video_composer  # Linux
+./build/windows-debug/bin/video_composer.exe  # Windows
 
 # テスト実行
-ctest --test-dir build/debug --output-on-failure
+ctest --test-dir build/linux-debug/build --output-on-failure  # Linux
+ctest --test-dir build/windows-debug/build --output-on-failure  # Windows
 ```
 
 詳しい環境構築手順は [docs/getting-started.md](docs/getting-started.md) を参照してください。

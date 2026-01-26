@@ -28,12 +28,17 @@
 git clone https://github.com/tomolatoon/fundprog-assignment14.git
 cd fundprog-assignment14
 
-# ビルド（Debug）
-cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build build/debug
+# 構成: 推奨: プリセットを使用 (CMake 3.19+)
+cmake --preset linux-debug  # Linux
+cmake --preset windows-debug  # Windows (MinGW)
+
+# ビルド
+cmake --build build/ilnux-debug  # Linux
+cmake --build build/windows-debug  # Windows (MinGW)
 
 # 実行
-./build/debug/app/video_composer
+./build/debug/app/video_composer  # Linux
+./build/windows-debug/app/video_composer.exe  # Windows
 
 # テスト実行
 ctest --test-dir build/debug --output-on-failure

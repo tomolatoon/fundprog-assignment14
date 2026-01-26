@@ -7,6 +7,7 @@
 | ツール | バージョン | 用途 |
 |--------|-----------|------|
 | CMake | 3.14 以上 | ビルドシステム |
+| Ninja | 1.10 以上 | ビルドツール (高速化) |
 | GCC または Clang | C99 対応 | コンパイラ |
 | GDB | 任意 | デバッグ（オプション） |
 | ffmpeg | 任意 | GIF 変換（オプション） |
@@ -31,22 +32,60 @@ cd fundprog-video-composer
 
 ## ビルド
 
-### Debug ビルド（推奨）
+### CMake Presets (推奨)
 
-デバッグ情報付き、AddressSanitizer/UndefinedBehaviorSanitizer 有効：
+CMake 3.19 以上をお使いの場合は、プリセット機能を使って簡単にビルド構成を行えます。
+特に Windows 環境の場合はこのプリセットを使うと GCC が強制されて便利です。
+
+**利用可能なプリセット一覧:**
 
 ```bash
-cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build build/debug
+cmake --list-presets
 ```
 
-### Release ビルド
-
-速度最適化、LTO 有効：
+**Linux (Debug / Release):**
 
 ```bash
+# Debug
+cmake --preset linux-debug
+cmake --build build/linux-debug
+
+# Release
+cmake --preset linux-release
+cmake --build build/linux-release
+```
+
+**Windows (MinGW) (Debug / Release):**
+
+```bash
+# Debug
+cmake --preset windows-debug
+cmake --build build/windows-debug
+
+# Release
+cmake --preset windows-release
+cmake --build build/windows-release
+```
+
+### 従来の方法
+
+CMake のバージョンが古い場合は、プリセットを使わずにコマンドライン引数を次のように直接与えてください。
+
+```bash
+# Debug
+cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug
+
+# Release
 cmake -B build/release -DCMAKE_BUILD_TYPE=Release
 cmake --build build/release
+```
+
+また、Ninja が使用できない環境では次のようなコマンドライン引数も同時に与えてください。
+
+```bash
+-G "Unix Makefiles"  # Linux
+-G "MinGW Makefiles" # Windows (MinGW)
 ```
 
 ### ビルド成果物

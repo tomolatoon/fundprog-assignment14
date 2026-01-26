@@ -59,11 +59,17 @@ function(set_debug_options target)
             $<$<CONFIG:Debug>:-g3> # 最大限のデバッグ情報
             $<$<CONFIG:Debug>:-O0> # 最適化なし
             $<$<CONFIG:Debug>:-fno-omit-frame-pointer> # スタックトレース保持
-            $<$<CONFIG:Debug>:-fsanitize=address,undefined> # Sanitizer有効
         )
-        target_link_options(${target} PRIVATE
-            $<$<CONFIG:Debug>:-fsanitize=address,undefined>
-        )
+        
+        # Windows(MinGW)ではSanitizerが標準でリンクできない場合があるため除外
+        if(NOT WIN32)
+            target_compile_options(${target} PRIVATE
+                $<$<CONFIG:Debug>:-fsanitize=address,undefined> # Sanitizer有効
+            )
+            target_link_options(${target} PRIVATE
+                $<$<CONFIG:Debug>:-fsanitize=address,undefined>
+            )
+        endif()
     endif()
 endfunction()
 

@@ -145,10 +145,10 @@ endforeach()
 
 ```bash
 # テスト
-ctest --test-dir build/debug
+ctest --test-dir build/linux-debug/build
 
 # Example
-./build/debug/libs/layer/example_layer
+./build/linux-debug/bin/example_layer
 ```
 
 ---

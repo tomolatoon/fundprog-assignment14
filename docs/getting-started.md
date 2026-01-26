@@ -7,6 +7,7 @@
 | ツール | バージョン | 用途 |
 |--------|-----------|------|
 | CMake | 3.14 以上 | ビルドシステム |
+| Ninja | 1.10 以上 | ビルドツール (高速化) |
 | GCC または Clang | C99 対応 | コンパイラ |
 | GDB | 任意 | デバッグ（オプション） |
 | ffmpeg | 任意 | GIF 変換（オプション） |
@@ -31,22 +32,60 @@ cd fundprog-video-composer
 
 ## ビルド
 
-### Debug ビルド（推奨）
+### CMake Presets (推奨)
 
-デバッグ情報付き、AddressSanitizer/UndefinedBehaviorSanitizer 有効：
+CMake 3.19 以上をお使いの場合は、プリセット機能を使って簡単にビルド構成を行えます。
+特に Windows 環境の場合はこのプリセットを使うと GCC が強制されて便利です。
+
+**利用可能なプリセット一覧:**
 
 ```bash
-cmake -B build/debug -DCMAKE_BUILD_TYPE=Debug
-cmake --build build/debug
+cmake --list-presets
 ```
 
-### Release ビルド
-
-速度最適化、LTO 有効：
+**Linux (Debug / Release):**
 
 ```bash
-cmake -B build/release -DCMAKE_BUILD_TYPE=Release
-cmake --build build/release
+# Debug
+cmake --preset linux-debug
+cmake --build build/linux-debug
+
+# Release
+cmake --preset linux-release
+cmake --build build/linux-release
+```
+
+**Windows (MinGW) (Debug / Release):**
+
+```bash
+# Debug
+cmake --preset windows-debug
+cmake --build build/windows-debug
+
+# Release
+cmake --preset windows-release
+cmake --build build/windows-release
+```
+
+### 従来の方法
+
+CMake のバージョンが古い場合は、プリセットを使わずにコマンドライン引数を次のように直接与えてください。
+
+```bash
+# Debug
+cmake -B build/debug/build -DCMAKE_BUILD_TYPE=Debug
+cmake --build build/debug/build
+
+# Release
+cmake -B build/release/build -DCMAKE_BUILD_TYPE=Release
+cmake --build build/release/build
+```
+
+また、Ninja が使用できない環境では次のようなコマンドライン引数も同時に与えてください。
+
+```bash
+-G "Unix Makefiles"  # Linux
+-G "MinGW Makefiles" # Windows (MinGW)
 ```
 
 ### ビルド成果物
@@ -55,9 +94,10 @@ cmake --build build/release
 
 | ファイル | 説明 |
 |---------|------|
-| `build/debug/app/video_composer` | 統合アプリケーション |
-| `build/debug/libs/rgba/test_rgba` | RGBA ライブラリのテスト |
-| `build/debug/libs/*/lib*.a` | 各ライブラリの静的ライブラリ |
+| `build/linux-debug/bin/video_composer` | 統合アプリケーション |
+| `build/linux-debug/bin/test_rgba` | RGBA ライブラリのテスト |
+| `build/linux-debug/lib/lib*.a` | 各ライブラリの静的ライブラリ |
+| `build/linux-debug/build/` | 中間ファイル (Ninja ビルド定義など) |
 
 ---
 
@@ -66,7 +106,7 @@ cmake --build build/release
 ### テスト実行
 
 ```bash
-ctest --test-dir build/debug --output-on-failure
+ctest --test-dir build/linux-debug/build --output-on-failure
 ```
 
 成功すると以下のような出力が表示されます:
@@ -82,7 +122,7 @@ Test project /path/to/build/debug
 ### アプリケーション実行
 
 ```bash
-./build/debug/app/video_composer
+./build/linux-debug/bin/video_composer
 ```
 
 出力例：
@@ -133,9 +173,10 @@ xcode-select --install            # macOS
 
 ### clangd の警告が消えない
 
-ビルド後、`compile_commands.json` が生成されます。VS Code を再起動すると警告が解消されます。
+ビルド後、`compile_commands.json` が生成されます。ビルド後、`.clangd` のパスを適切なフォルダを指定すると警告は解除されます。
 
 ```bash
-# compile_commands.json の場所を確認
-ls build/debug/compile_commands.json
+CompileFlags:
+  CompilationDatabase: build/linux-debug/build
+
 ```

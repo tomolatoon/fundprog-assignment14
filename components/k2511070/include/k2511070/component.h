@@ -13,4 +13,7 @@ void k2511070_component_init(void);
 /// @param[in] layer 描画先レイヤー
 void k2511070_component_draw(HLayer layer);
 
+/// 一つの八分音符を描画する関数
+HLayer one_eighth_note(RGBA c, HLayer layer, point p);
+
 #endif // K2511070_COMPONENT_H

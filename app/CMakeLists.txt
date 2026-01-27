@@ -9,6 +9,7 @@ add_executable(video_composer
 target_link_libraries(video_composer PRIVATE
     ${PROJECT_NAME}::h2511186_lib
     ${PROJECT_NAME}::k2511070_lib
+    ${PROJECT_NAME}::i2511030_lib
 )
 
 set_strict_warnings(video_composer)

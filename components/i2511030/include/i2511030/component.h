@@ -16,8 +16,6 @@ typedef struct
 	GeneratorF generator;
 } video_layer;
 
-Point lerp_point(Point a, Point b, double t);
-
 HLayer i2511030_circle(Point center);
 
 HLayer i2511030_sample_layer1_generator(double time);

@@ -3,7 +3,7 @@
 
 #include "i2511030/component.h"
 
-Point lerp_point(Point a, Point b, double t)
+static Point lerp_point(Point a, Point b, double t)
 {
 	return POINT((int)(a.x + (b.x - a.x) * t), (int)(a.y + (b.y - a.y) * t));
 }

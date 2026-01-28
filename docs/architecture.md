@@ -103,7 +103,7 @@ graph TD
 
 ```bash
 # PPM 連番から GIF を生成する例
-ffmpeg -framerate 30 -i output/frames/frame_%04d.ppm -filter_complex "[0:v] split [a][b]; [a] palettegen [p]; [b][p] paletteuse=diff_mode=rectangle" animation.gif
+ffmpeg -framerate 30 -i output/frames/frame_%04d.ppm -filter_complex "[0:v] split [a][b]; [a] palettegen [p]; [b][p] paletteuse=diff_mode=rectangle" output/animation.gif
 ```
 
 ---

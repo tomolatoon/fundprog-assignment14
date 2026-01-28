@@ -2,11 +2,6 @@
 #include <stdio.h>
 #include <math.h>
 
-void h2511186_component_init(void)
-{
-    // 特に初期化なし
-}
-
 //=============
 // 2倍拡大関数
 //=============

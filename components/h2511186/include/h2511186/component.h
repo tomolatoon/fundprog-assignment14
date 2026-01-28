@@ -6,7 +6,6 @@
 
 #include "layer/layer.h"
 
-void h2511186_component_init(void);
 HLayer h2511186_background_layer(double time);
 HLayer h2511186_sun_layer(double time);
 HLayer h2511186_miku_layer(double time);

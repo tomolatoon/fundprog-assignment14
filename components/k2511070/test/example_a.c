@@ -9,12 +9,12 @@ typedef HLayer(*F)(double);
 
 int main(void)
 {
-	F f[] = {k2511070_bound_one_note_layer,k2511070_bound_two_note_layer};
+	F f[] = {change};
 
 	HLayer layer = layer_create(SIZE(640, 480));
 
 	double diff = 1 / 30.0;
-	for (int j = 0; j*diff<=5.0; ++j)
+	for (int j = 0; j*diff<=10.0; ++j)
 	{
         double t = j*diff;
         layer_fill(

@@ -149,18 +149,40 @@ void layer_fill(HLayer layer, RGBA color);
 // ============================================================================
 
 /// @brief 長方形を塗りつぶし描画する
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] pos 左上座標
+/// @param[in] size サイズ
+/// @param[in] color 描画色
 void layer_draw_rect(HLayer layer, Point pos, Size size, RGBA color);
 
 /// @brief 円を塗りつぶし描画する
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] center 中心座標
+/// @param[in] radius 半径
+/// @param[in] color 描画色
 void layer_draw_circle(HLayer layer, Point center, size_t radius, RGBA color);
 
 /// @brief 線を描画する（長方形ポリゴン方式）
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] p1 始点
+/// @param[in] p2 終点
+/// @param[in] thickness 太さ
+/// @param[in] color 描画色
 void layer_draw_line(HLayer layer, Point p1, Point p2, size_t thickness, RGBA color);
 
 /// @brief 三角形を塗りつぶし描画する
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] p1 頂点1
+/// @param[in] p2 頂点2
+/// @param[in] p3 頂点3
+/// @param[in] color 描画色
 void layer_draw_triangle(HLayer layer, Point p1, Point p2, Point p3, RGBA color);
 
 /// @brief 多角形を塗りつぶし描画する
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] points 頂点配列
+/// @param[in] n 頂点数
+/// @param[in] color 描画色
 void layer_draw_polygon(HLayer layer, const Point* points, size_t n, RGBA color);
 
 
@@ -169,18 +191,40 @@ void layer_draw_polygon(HLayer layer, const Point* points, size_t n, RGBA color)
 // ============================================================================
 
 /// @brief 線を AA 描画する（長方形ポリゴン方式 + Edge Function AA）
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] p1 始点
+/// @param[in] p2 終点
+/// @param[in] thickness 太さ
+/// @param[in] color 描画色
 void layer_draw_line_aa(HLayer layer, Point p1, Point p2, size_t thickness, RGBA color);
 
 /// @brief 長方形を AA 描画する（境界カバレッジ計算）
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] pos 左上座標
+/// @param[in] size サイズ
+/// @param[in] color 描画色
 void layer_draw_rect_aa(HLayer layer, Point pos, Size size, RGBA color);
 
 /// @brief 円を AA 描画する（Xiaolin Wu 円アルゴリズム）
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] center 中心座標
+/// @param[in] radius 半径
+/// @param[in] color 描画色
 void layer_draw_circle_aa(HLayer layer, Point center, size_t radius, RGBA color);
 
 /// @brief 三角形を AA 描画する（各辺を Wu 線で描画）
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] p1 頂点1
+/// @param[in] p2 頂点2
+/// @param[in] p3 頂点3
+/// @param[in] color 描画色
 void layer_draw_triangle_aa(HLayer layer, Point p1, Point p2, Point p3, RGBA color);
 
 /// @brief 多角形を AA 描画する（各辺を Wu 線で描画）
+/// @param[in,out] layer 描画先レイヤー
+/// @param[in] points 頂点配列
+/// @param[in] n 頂点数
+/// @param[in] color 描画色
 void layer_draw_polygon_aa(HLayer layer, const Point* points, size_t n, RGBA color);
 
 
@@ -189,21 +233,31 @@ void layer_draw_polygon_aa(HLayer layer, const Point* points, size_t n, RGBA col
 // ============================================================================
 
 /// @brief レイヤーを切り抜く（破壊的）
+/// @param[in,out] layer 操作対象レイヤー
+/// @param[in] pos 切り抜き開始位置（左上）
+/// @param[in] size 切り抜きサイズ
 void layer_clip(HLayer layer, Point pos, Size size);
 
 /// @brief レイヤーをリサイズする（破壊的、Nearest Neighbor補間）
+/// @param[in,out] layer 操作対象レイヤー
+/// @param[in] new_size 新しいサイズ
 void layer_resize_nearest(HLayer layer, Size new_size);
 
 /// @brief レイヤーをリサイズする（破壊的、Bilinear補間）
+/// @param[in,out] layer 操作対象レイヤー
+/// @param[in] new_size 新しいサイズ
 void layer_resize_bilinear(HLayer layer, Size new_size);
 
 /// @brief レイヤーを水平反転する（破壊的）
+/// @param[in,out] layer 操作対象レイヤー
 void layer_flip_horizontal(HLayer layer);
 
 /// @brief レイヤーを垂直反転する（破壊的）
+/// @param[in,out] layer 操作対象レイヤー
 void layer_flip_vertical(HLayer layer);
 
 /// @brief レイヤーを 2x ダウンサンプルする（破壊的）
+/// @param[in,out] layer 操作対象レイヤー
 void layer_downsample_2x(HLayer layer);
 
 // ============================================================================
@@ -211,21 +265,37 @@ void layer_downsample_2x(HLayer layer);
 // ============================================================================
 
 /// @brief レイヤーを切り抜いた新しいレイヤーを作成する
+/// @param[in] layer 元レイヤー
+/// @param[in] pos 切り抜き開始位置（左上）
+/// @param[in] size 切り抜きサイズ
+/// @return 新しいレイヤー、失敗時は NULL
 HLayer layer_clip_to(HLayer layer, Point pos, Size size);
 
 /// @brief レイヤーをリサイズした新しいレイヤーを作成する（Nearest Neighbor補間）
+/// @param[in] layer 元レイヤー
+/// @param[in] new_size 新しいサイズ
+/// @return 新しいレイヤー、失敗時は NULL
 HLayer layer_resize_nearest_to(HLayer layer, Size new_size);
 
 /// @brief レイヤーをリサイズした新しいレイヤーを作成する（Bilinear補間）
+/// @param[in] layer 元レイヤー
+/// @param[in] new_size 新しいサイズ
+/// @return 新しいレイヤー、失敗時は NULL
 HLayer layer_resize_bilinear_to(HLayer layer, Size new_size);
 
 /// @brief レイヤーを水平反転した新しいレイヤーを作成する
+/// @param[in] layer 元レイヤー
+/// @return 新しいレイヤー、失敗時は NULL
 HLayer layer_flip_horizontal_to(HLayer layer);
 
 /// @brief レイヤーを垂直反転した新しいレイヤーを作成する
+/// @param[in] layer 元レイヤー
+/// @return 新しいレイヤー、失敗時は NULL
 HLayer layer_flip_vertical_to(HLayer layer);
 
 /// @brief レイヤーを 2x ダウンサンプルした新しいレイヤーを作成する
+/// @param[in] layer 元レイヤー
+/// @return 新しいレイヤー、失敗時は NULL
 HLayer layer_downsample_2x_to(HLayer layer);
 
 // ============================================================================
@@ -246,15 +316,25 @@ void layer_composite(HLayer dst, HLayer src, Point pos, BlendFunc blend);
 // ============================================================================
 
 /// @brief レイヤーを PPM P3（テキスト）形式で保存する
+/// @param[in] layer 保存するレイヤー
+/// @param[in] filename ファイル名（パスを含む）
+/// @return 成功した場合は true、失敗した場合は false
 bool layer_save_p3(HLayer layer, const char* filename);
 
 /// @brief レイヤーを PPM P6（バイナリ）形式で保存する
+/// @param[in] layer 保存するレイヤー
+/// @param[in] filename ファイル名（パスを含む）
+/// @return 成功した場合は true、失敗した場合は false
 bool layer_save_p6(HLayer layer, const char* filename);
 
 /// @brief PPM P3（テキスト）形式からレイヤーを読み込む
+/// @param[in] filename ファイル名（パスを含む）
+/// @return 作成されたレイヤー、失敗時は NULL
 HLayer layer_load_p3(const char* filename);
 
 /// @brief PPM P6（バイナリ）形式からレイヤーを読み込む
+/// @param[in] filename ファイル名（パスを含む）
+/// @return 作成されたレイヤー、失敗時は NULL
 HLayer layer_load_p6(const char* filename);
 
 #endif // LAYER_H

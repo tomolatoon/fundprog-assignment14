@@ -6,11 +6,10 @@
 
 #include "layer/layer.h"
 
-/// @brief h2511186 コンポーネントの初期化（ダミー）
-void h2511186_component_init(void);
-
-/// @brief h2511186 コンポーネントのサンプル描画（ダミー）
-/// @param[in] layer 描画先レイヤー
-void h2511186_component_draw(HLayer layer);
+HLayer h2511186_background_layer(double time);
+HLayer h2511186_sun_layer(double time);
+HLayer h2511186_miku_layer(double time);
+HLayer h2511186_ground_layer(double time);
+HLayer scale2x(HLayer src);
 
 #endif // H2511186_COMPONENT_H

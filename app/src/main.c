@@ -12,7 +12,7 @@
 #define HEIGHT  480
 
 typedef HLayer (*video_layer)(double);
-video_layer layers[] = {h2511186_background_layer, h2511186_sun_layer, h2511186_ground_layer, h2511186_miku_layer};
+video_layer layers[] = {h2511186_background_layer, h2511186_sun_layer, k2511070_bound_one_note_layer, k2511070_bound_two_note_layer, h2511186_ground_layer, h2511186_miku_layer,change};
 
 int main(void)
 {

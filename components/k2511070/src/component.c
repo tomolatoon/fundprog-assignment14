@@ -140,7 +140,7 @@ HLayer two_eighth_note(RGBA c, Point p){
 
 //一つの八分音符が4つ画面上をスクロールするアニメーション.背景太陽のレイヤーとミクの間
 HLayer k2511070_bound_one_note_layer(double time){
-	RGBA white = rgba_new(1.0, 1.0, 1.0, 1.0);
+	RGBA white = rgba_new(1.0, 1.0, 1.0, 0.0);
 	double y = 270;
 	double x_speed = 200;
 
@@ -189,7 +189,7 @@ HLayer k2511070_bound_one_note_layer(double time){
 
 //2つの八分音符が3つ画面上をスクロールするアニメーション.背景太陽のレイヤーとミクの間
 HLayer k2511070_bound_two_note_layer(double time){
-	RGBA white = rgba_new(1.0, 1.0, 1.0, 1.0);
+	RGBA white = rgba_new(1.0, 1.0, 1.0, 0.0);
 	double y = 320;
 	double x_speed = 200;
 
@@ -238,7 +238,7 @@ HLayer k2511070_bound_two_note_layer(double time){
 
 //二色の長方形で画面切り替えをする関数.一番上のレイヤーに
 HLayer change(double time){
-	RGBA white = rgba_new(1.0, 1.0, 1.0, 1.0);
+	RGBA white = rgba_new(1.0, 1.0, 1.0, 0.0);
 	RGBA lightblue = rgba_new(0.53, 0.81, 1.0, 1.0);
 	RGBA blue = rgba_new(0.0, 0.2, 1.0, 1.0);
 	RGBA orange = rgba_new(1.0, 0.55, 0.0, 1.0);

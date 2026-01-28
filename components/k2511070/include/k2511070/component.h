@@ -21,4 +21,6 @@ HLayer two_eighth_note(RGBA c, Point p);
 
 HLayer k2511070_bound_one_note_layer(double time);
 
+HLayer k2511070_bound_two_note_layer(double time);
+
 #endif // K2511070_COMPONENT_H

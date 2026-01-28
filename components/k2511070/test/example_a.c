@@ -9,8 +9,7 @@ typedef HLayer(*F)(double);
 
 int main(void)
 {
-    printf("aaa\n");
-	F f[] = {k2511070_bound_one_note_layer};
+	F f[] = {k2511070_bound_one_note_layer,k2511070_bound_two_note_layer};
 
 	HLayer layer = layer_create(SIZE(640, 480));
 
